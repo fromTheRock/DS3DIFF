@@ -1,4 +1,5 @@
 import os
+
 #In PowerShell use the following command to set Environment Variable compatible with os.environ
 #$env:S3_ENDPOINT = "s3"
 if __name__ == "__main__":

@@ -20,11 +20,11 @@ documentation not working yet:
 
 ## How to set configure the S3 Access
 
-I can put my bucket info on the variables in **S3config.py**.
+I can put my bucket info on the variables in **S3connectionData.py**.
 
 However, because I want to put this project Open Source on GIT, i prefer to set my data as Environment Variables before running the Python Program.
 
-I put the corresponding OS Environment Variable to use instad of the Variables in the **S3config** python modules.
+I put the corresponding OS Environment Variable to use instad of the Variables in the **S3connectionData** python modules.
 
 ```text
 ### Technology I am going to use

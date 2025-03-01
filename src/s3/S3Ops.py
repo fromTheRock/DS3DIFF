@@ -1,6 +1,7 @@
 import boto3
 import os
 import sys
+import S3connectionData as S3connData
 from typing import Dict, Any
 
 class S3Ops:
@@ -33,7 +34,7 @@ class S3Ops:
             Dict[str, Any]: Response containing bucket information
         """
         s3_client = cls.get_s3_client(endpoint_url)
-        return s3_client.list_buckets()
+        return s3_client.list_buckets("eu-west-1")
 
     @classmethod
     def list_files(cls, endpoint_url: str, bucket_name: str) -> Dict[str, Any]:
@@ -89,7 +90,8 @@ def print_bucket_names(buckets: Dict[str, Any]) -> None:
 
 def main() -> None:
     """Main entry point of the script"""
-    endpoint = os.environ.get("S3_ENDPOINT", "")
+    cdEndPnt = S3connData.endpoint
+    endpoint = os.environ.get("S3_ENDPOINT", cdEndPnt)
     response = S3Ops.list_buckets(endpoint)
     #print(response)
     if response['ResponseMetadata']['HTTPStatusCode'] == 200:
