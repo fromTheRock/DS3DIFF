@@ -1,0 +1,10 @@
+# Exclude all files with specific extensions
+*.log
+**/*.bak
+
+# Common Python-specific excludes (since I notice you're working with Python)
+**/__pycache__/
+venv/
+
+# IDE specific
+.vscode/

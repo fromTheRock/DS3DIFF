@@ -1,10 +1,32 @@
-from S3Ops import S3Ops as s3
+from S3Ops import S3Ops
+
+def getValidBucketNumber(max_buckets: int) -> int:
+    """
+    Get and validate user input for bucket selection.
+    
+    Args:
+        max_buckets (int): Maximum number of buckets to choose from
+        
+    Returns:
+        int: Validated bucket number
+    """
+    while True:
+        try:
+            value = input('Which bucket do you want to list? (Enter a number): ')
+            bucket_num = int(value)
+            if 1 <= bucket_num <= max_buckets:
+                return bucket_num
+            else:
+                print(f'Please enter a number between 1 and {max_buckets}')
+        except ValueError:
+            print('Please enter a valid integer')
+
 
 def main() -> None:
     """Main entry point of the script"""
-    endpoint, region = s3.getConnectionData()
-    client = s3.getS3Client(endpoint)
-    response = s3.listBuckets(client, endpoint, region)
+
+    s3 = S3Ops()
+    response = s3.listBuckets()
     #print(response)
     if response['ResponseMetadata']['HTTPStatusCode'] == 200:
         print('S3 buckets listed successfully.')
@@ -14,12 +36,11 @@ def main() -> None:
     
     bucket_list = s3.printBucketNames(response)
     if bucket_list:
-        selected_num = s3.getValidBucketNumber(len(bucket_list))
+        selected_num = getValidBucketNumber(len(bucket_list))
         selected_bucket = bucket_list[selected_num - 1]['Name']
         print(f"You selected bucket: {selected_bucket}")
         
-        #TODO: selected_bucket must be in the format Bucket-name.s3express-zone-id.region-code.amazonaws.com
-        #print(s3.bucketList(client, response, selected_bucket))
+        print(s3.listFiles(selected_bucket))
     else:
         print("No buckets found")
 

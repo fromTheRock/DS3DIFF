@@ -7,38 +7,61 @@ from typing import Dict, Any
 class S3Ops:
     """Utility class for S3 operations"""
 
-    @staticmethod
-    def getS3Client(endpoint_url: str) -> boto3.client:
+    s3Endpoint: str = None
+    s3Region: str = None
+    s3Client: boto3.client = None
+    s3_bucket_name: str = None
+
+    def __init__(self, endpoint_url: str = None, region: str = None):
         """
-        Create and return an S3 client with the specified endpoint.
-        
+        Initialize the S3Ops class.
+
         Args:
-            endpoint_url (str): The S3 endpoint URL
+            endpoint_url (str, optional): The S3 endpoint URL. Defaults to None.
+        """
+        if endpoint_url is None and region is None:
+            epnt, reg = self.getConnectionData()
+        if endpoint_url is None:
+            endpoint_url = self.s3Endpoint = epnt
+        if region is None:
+            region = reg
+        self.s3Endpoint = endpoint_url
+        self.s3Region = region
+
+        self.s3Client = self.getS3Client()
+
+    #@classmethod
+    #@staticmethod
+    def getS3Client(self) -> boto3.client:
+        """
+        Create and return an S3 client with the endpoint specified in S3Ops object.
             
         Returns:
             boto3.client: Configured S3 client
         """
-        if endpoint_url is None:
-            return boto3.client('s3')
-        return boto3.client('s3', endpoint_url=endpoint_url)
+        if self.s3Endpoint is None:
+            self.s3Endpoint = 's3'
+            return boto3.client('s3',
+                                self.s3Endpoint)
+        
+        self.s3Client =  boto3.client('s3', 
+                                      endpoint_url=self.s3Endpoint, 
+                                      region_name=self.s3Region)
+        #boto3.client('s3', endpoint_url=self.s3Endpoint)
+        return self.s3Client
 
-    @staticmethod
-    def listBuckets(cls, endpoint_url: str, region: str) -> Any:
+    def listBuckets(self) -> Any:
         """
         Get list of S3 buckets.
         
-        Args:
-            endpoint_url (str): The S3 endpoint URL
-            
         Returns:
             Dict[str, Any]: Response containing bucket information
         """
-        #s3_client = cls.getS3Client(endpoint_url)
-        return cls.list_buckets(BucketRegion=region)
+        if self.s3Client is None:
+            return None
+        return self.s3Client.list_buckets(BucketRegion=self.s3Region)
 
-    #@classmethod
-    @staticmethod
-    def listFiles(cls, endpoint_url: str, bucket_name: str) -> Dict[str, Any]:
+    def listFiles(self, bucket_name: str) -> Dict[str, Any]:
         """
         Get list of files in a S3 bucket.
 
@@ -50,30 +73,10 @@ class S3Ops:
             Dict[str, Any]: Response containing file information
         """
         #s3_client = cls.getS3Client(endpoint_url)
-        return cls.list_objects_v2(Bucket=bucket_name)
+        if self.s3Client is None:
+            return None
+        return self.s3Client.list_objects_v2(Bucket=bucket_name)
 
-
-    @staticmethod
-    def getValidBucketNumber(max_buckets: int) -> int:
-        """
-        Get and validate user input for bucket selection.
-        
-        Args:
-            max_buckets (int): Maximum number of buckets to choose from
-            
-        Returns:
-            int: Validated bucket number
-        """
-        while True:
-            try:
-                value = input('Which bucket do you want to list? (Enter a number): ')
-                bucket_num = int(value)
-                if 1 <= bucket_num <= max_buckets:
-                    return bucket_num
-                else:
-                    print(f'Please enter a number between 1 and {max_buckets}')
-            except ValueError:
-                print('Please enter a valid integer')
 
     @staticmethod
     def printBucketNames(buckets: Dict[str, Any]) -> None:
@@ -108,9 +111,10 @@ class S3Ops:
 
 def main() -> None:
     """Main entry point of the script"""
-    endpoint, region = S3Ops.getConnectionData()
-    client = S3Ops.getS3Client(endpoint)
-    response = S3Ops.listBuckets(client, endpoint, region)
+
+    s3 = S3Ops()
+    response = s3.listBuckets()
+
     #print(response)
     if response['ResponseMetadata']['HTTPStatusCode'] == 200:
         print('S3 buckets listed successfully.')

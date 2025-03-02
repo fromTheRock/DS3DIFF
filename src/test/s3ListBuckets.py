@@ -1,10 +1,10 @@
-from S3Ops import S3Ops as s3
+from S3Ops import S3Ops
 
 def main() -> None:
     """Main entry point of the script"""
-    endpoint, region = s3.getConnectionData()
-    client = s3.getS3Client(endpoint)
-    response = s3.listBuckets(client, endpoint, region)
+
+    s3 = S3Ops()
+    response = s3.listBuckets()
     #print(response)
     if response['ResponseMetadata']['HTTPStatusCode'] == 200:
         print('S3 buckets listed successfully.')
