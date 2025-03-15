@@ -1,5 +1,5 @@
 # DS3 Diff
- 
+
 WORK IN PROGRESS...
 
 ## Main Description
@@ -16,15 +16,46 @@ However, because I'm building it, I am going to have more control on the sync pr
 - Program written in Python
 - Access to Cubbit DS3 (AWS compatible) with Boto3
 
-documentation not working yet:
+## Configure the program before the launch
+
+The program has modules separated in different packages. So I need to have the PYTHONPATH Environment Variable set before launching the sample modules.
+
+Better to use the Absolute paths just to bee sure that It works fine lawnching the progam for any directory.
+
+Unfortunately there are different syntax to do that even using only Window:
+
+In this documentation I am assuming the probram is located in the *C:\Python* path.
+
+PowerShell command:
+
+```PowerShell
+#Often I need to enable teh Execution Policy in order to run scripts or set environment variables
+Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process
+$env:PYTHONPATH = "C:\Python\ddDS3DIFF;C:\Python\ddDS3DIFF\src;C:\Python\ddDS3DIFFsrc\s3"
+```
+
+Unsng CMD Shell:
+
+```CMD
+SET PYTHONPATH=C:\Python\ddDS3DIFF;C:\Python\ddDS3DIFF\src;C:\Python\ddDS3DIFFsrc\s3
+```
+
+I haven't test the program on Linux yet but the command (assuming I put the program in my home directory) should be:
+
+```bash
+PYTHONPATH=~/ddDS3DIFF:~/Python/ddDS3DIFF/src:~/Python/ddDS3DIFFsrc/s3
+export PYTHONPATH
+```
 
 ## How to set configure the S3 Access
 
 I can put my bucket info on the variables in **S3connectionData.py**.
 
-However, because I want to put this project Open Source on GIT, i prefer to set my data as Environment Variables before running the Python Program.
+However, because I want to put this project Open Source on GIT, I prefer to set my data as Environment Variables before running the Python Program.
 
 I put the corresponding OS Environment Variable to use instad of the Variables in the **S3connectionData** python modules.
+
+documentation not working yet:
 
 ```text
 ### Technology I am going to use
@@ -45,10 +76,5 @@ python ds3diff.py
 
 2025-02-09 - I run my test with Python 3.13
 
-The package dependencies I installed was:
-
-`bash
-py -m pip install textile
-py -m pip install boto3
-`
-```
+The package dependencies are listed in the file **requirements.txt**
+´´´
