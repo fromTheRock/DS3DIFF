@@ -1,8 +1,8 @@
 import os
 import sys
 import datetime
-from stat import *
-        
+from stat import S_ISDIR, S_ISREG
+
 class FileData:
     '''Base object representina a filesyssemt object
     '''
@@ -10,18 +10,20 @@ class FileData:
     name = ""
     extension = ""
     size = 0
-    creationDate = None
-    lastModificationDate = None
-    def __init__(self, path: str, name: str, size: int, creationDate: int, lastModificationDate: int) -> None:
+    creation_date = None
+    last_modification_date = None
+
+    def __init__(self, path: str, name: str, size: int, 
+                 creation_date: int, last_modification_date: int) -> None:
         self.path = path
         self.name = name
         _, file_extension = os.path.splitext(name)
         self.extension =  file_extension[1:] if file_extension else ""
         self.size = size
-        self.creationDate = datetime.datetime.fromtimestamp(creationDate, tz=datetime.timezone.utc)
-        self.lastModificationDate = datetime.datetime.fromtimestamp(lastModificationDate, tz=datetime.timezone.utc)
+        self.creation_date = datetime.datetime.fromtimestamp(creation_date, tz=datetime.timezone.utc)
+        self.last_modification_date = datetime.datetime.fromtimestamp(last_modification_date, tz=datetime.timezone.utc)
 
-    def getSize(self) -> str:
+    def get_size(self) -> str:
         if self.size < 1024:
             return f"{self.size} B"
         elif self.size < 1024 * 1024:
@@ -34,8 +36,8 @@ class FileData:
             return f"{self.size / (1024 * 1024 * 1024 * 1024):.2f} TB"
 
     def __str__(self):
-        #return f"Path: {self.path}, Name: {self.name}, Extension: {self.extension}, Size: {self.size}, Creation Date: {self.creationDate}, Last Modification Date: {self.lastModificationDate}"
-        return f"{self.path}, Size: {self.getSize()}, Creation Date: {self.creationDate}, Last Modification Date: {self.lastModificationDate}"
+        #return f"Path: {self.path}, Name: {self.name}, Extension: {self.extension}, Size: {self.size}, Creation Date: {self.creation_date}, Last Modification Date: {self.last_modification_date}"
+        return f"{self.path}, Size: {self.get_size()}, Creation Date: {self.creation_date}, Last Modification Date: {self.last_modification_date}"
 
 
 def walktree(top, callback):
@@ -55,10 +57,12 @@ def walktree(top, callback):
             # Unknown file type, print a message
             print('Skipping %s' % pathname)
 
-def extractFileData(path: str, listFiles: list) -> list:
-    filesJson = []
-    for file in listFiles:
-        pathname = os.path.join(path, file)
+def extract_file_data(path: str, list_files: list) -> list:
+    '''Returna a list of files in JSon format
+    '''
+    f_json = []
+    for fl in list_files:
+        pathname = os.path.join(path, fl)
         # get file data
         mode = os.lstat(pathname).st_mode
 
@@ -68,30 +72,33 @@ def extractFileData(path: str, listFiles: list) -> list:
         # If it's a regular file...
         elif S_ISREG(mode):
             fStat = os.stat(pathname)
-            filesJson.append(FileData(os.path.join(path,file), file, fStat.st_size, fStat.st_birthtime, fStat.st_mtime))
+            f_json.append(FileData(os.path.join(path,fl),
+                        fl, fStat.st_size, 
+                        fStat.st_birthtime, fStat.st_mtime))
 
-    return filesJson
+    return f_json
 
 
 def main() -> list:
+    '''Prints a list of files in directory received as argument
+    '''
     # sys.argv[0] is the script name
     # sys.argv[1:] contains the arguments
     if len(sys.argv) < 2:
         print("Argument required:")
         print(f"{sys.argv[0]} <PATH TO LIST>")
-        return
+        return None
 
     path = sys.argv[1]
 
-    listFiles = os.listdir(path)
+    list_files = os.listdir(path)
 
-    filesJson = extractFileData(path, listFiles)
+    f_json = extract_file_data(path, list_files)
 
-    return filesJson
+    return f_json
 
-if __name__ == "__main__":
-    
-    filesJson = main()
+if __name__ == "__main__":  
+    files_json = main()
 
-    for f in filesJson:
-        print (f)
+    for file in files_json:
+        print (file)
