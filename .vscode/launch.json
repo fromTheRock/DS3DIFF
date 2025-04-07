@@ -14,6 +14,7 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "envFile": "${workspaceFolder}/.env",
+            "args": ["${workspaceFolder}\\tests\\s3_fixture\\bucket1"]
         }
     ]
 }
