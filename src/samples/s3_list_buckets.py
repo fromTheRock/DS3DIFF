@@ -1,9 +1,12 @@
-from s3_ops import S3Ops
+from src.files.s3_ops import S3Ops
+from src.config import Config
+
 
 def main() -> None:
     """Main entry point of the script"""
 
-    s3 = S3Ops()
+    cfg = Config()
+    s3 = S3Ops(cfg)
     response = s3.list_buckets()
     #print(response)
     if response['ResponseMetadata']['HTTPStatusCode'] == 200:

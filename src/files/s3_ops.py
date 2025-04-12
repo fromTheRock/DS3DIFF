@@ -1,7 +1,12 @@
-"""Module containing the utility class for S3Ops"""
+"""
+Module containing the utility class for working with boto3 S3 funcions
+
+I like have a utility class that work with Config class to use 
+the right parameters to the boto3 funtions
+"""
 from typing import Dict, Any
 import boto3
-from config import Config
+from src.config import Config
 
 class S3Ops:
     """Utility class for S3 operations"""
@@ -10,14 +15,14 @@ class S3Ops:
     s3_client: boto3.client = None
     s3_bucket_name: str = None
 
-    def __init__(self):
+    def __init__(self, _cfg: Config):
         """
         Initialize the S3Ops class.
 
         Args:
             endpoint_url (str, optional): The S3 endpoint URL. Defaults to None.
         """
-        self.cfg = Config()
+        self.cfg = _cfg
         self.s3_client = self.get_s3_client()
 
     #@classmethod
@@ -84,8 +89,8 @@ class S3Ops:
 
 def main() -> None:
     """Main entry point of the script"""
-
-    s3 = S3Ops()
+    cfg = Config()
+    s3 = S3Ops(cfg)
     response = s3.list_buckets()
 
     #print(response)

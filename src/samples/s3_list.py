@@ -1,4 +1,5 @@
-from s3_ops import S3Ops
+from src.config import Config
+from src.files.s3_ops import S3Ops
 
 def get_valid_bucket_number(max_buckets: int) -> int:
     """
@@ -25,9 +26,10 @@ def get_valid_bucket_number(max_buckets: int) -> int:
 def main() -> None:
     """Main entry point of the script"""
 
-    s3 = S3Ops()
+    cfg = Config()
+    s3 = S3Ops(cfg)
     response = s3.list_buckets()
-    
+
     if response['ResponseMetadata']['HTTPStatusCode'] == 200:
         print('S3 buckets listed successfully.')
     else:

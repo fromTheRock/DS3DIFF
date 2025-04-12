@@ -24,14 +24,12 @@ Better to use the Absolute paths just to bee sure that It works fine lawnching t
 
 Unfortunately there are different syntax to do that even using only Window:
 
-In this documentation I am assuming the probram is located in the *C:\Python* path.
-
 PowerShell command:
 
 ```PowerShell
-#Often I need to enable teh Execution Policy in order to run scripts or set environment variables
-Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process
-$env:PYTHONPATH = "C:\Python\ddDS3DIFF;C:\Python\ddDS3DIFF\src;C:\Python\ddDS3DIFFsrc\s3"
+#Often I need to enable the Execution Policy in order to run scripts or set environment variables
+Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process; .\venv\Scripts\activate
+$env:PYTHONPATH = ".;src;src\files"
 ```
 
 Unsng CMD Shell:
@@ -43,8 +41,16 @@ SET PYTHONPATH=C:\Python\ddDS3DIFF;C:\Python\ddDS3DIFF\src;C:\Python\ddDS3DIFFsr
 I haven't test the program on Linux yet but the command (assuming I put the program in my home directory) should be:
 
 ```bash
-PYTHONPATH=~/ddDS3DIFF:~/Python/ddDS3DIFF/src:~/Python/ddDS3DIFFsrc/s3
+PYTHONPATH=~/ddDS3DIFF:~/ddDS3DIFF/src:~/ddDS3DIFF/src/files
 export PYTHONPATH
+```
+
+## Run test in Pytest
+
+I need to set the PYTHONPATH in order to run pytest or I can run it as a script:
+
+```bash
+python -m pytest
 ```
 
 ## How to set configure the S3 Access
