@@ -26,9 +26,9 @@ ENV_S3_ENDPOINT = 'http://127.0.0.1:5000'
 
 @pytest.fixture(scope="module")
 def set_aws_credentials():
-    """ "
+    ''' "
     http://docs.getmoto.org/en/latest/docs/getting_started.html#how-do-i-avoid-tests-from-mutating-my-real-infrastructure
-    """
+    '''
     os.environ['AWS_ACCESS_KEY_ID'] = 'testing'
     os.environ['AWS_SECRET_ACCESS_KEY'] = 'testing'
     os.environ['AWS_SECURITY_TOKEN'] = 'testing'
@@ -41,7 +41,7 @@ def set_aws_credentials():
 # Note: pick an appropriate fixture "scope" for your use case
 @pytest.fixture(scope="module")
 def moto_server():
-    """Fixture to run a mocked AWS server for testing."""
+    '''Fixture to run a mocked AWS server for testing.'''
     # Note: pass `port=0` to get a random free port.
     server = ThreadedMotoServer(ip_address="127.0.0.1", port=5000, verbose=True)
     server.start()
@@ -52,9 +52,9 @@ def moto_server():
 
 @pytest.fixture(scope="function")
 def s3_client(set_aws_credentials, moto_server):
-    """
+    '''
     Return a mocked S3 client
-    """
+    '''
     with mock_aws():
         # Setup code here (before "yeld" runs before the test)
         s3 = boto3.client('s3', endpoint_url=os.environ['S3_ENDPOINT'])
@@ -65,9 +65,9 @@ def s3_client(set_aws_credentials, moto_server):
         # For example, delete test buckets, files, etc.
 
 def test_config_read_env(set_aws_credentials):
-    """
+    '''
     Test config read from environment variables
-    """
+    '''
     cfg = Config()
     print(f'test_config_read_env: Environ Endpoint: {cfg.s3_endpoint}; Region: {cfg.s3_region}')
     assert cfg.s3_endpoint == ENV_S3_ENDPOINT
@@ -92,6 +92,11 @@ def test_list_buckets(set_aws_credentials, moto_server, s3_client):
     cfg = Config()
     print(f'test_list_buckets: Environ Endpoint: {cfg.s3_endpoint}; Region: {cfg.s3_region}')
     s3_ops = S3Ops(cfg)
+    
+    # Verify s3 connection
+    assert s3_ops is not None
+    assert s3_ops.s3_client is not None
+
     list_buckets = s3_ops.list_buckets()
 
     # Verify upload

@@ -3,10 +3,14 @@ from src.config import Config
 
 
 def main() -> None:
-    """Main entry point of the script"""
+    '''Main entry point of the script'''
 
     cfg = Config()
     s3 = S3Ops(cfg)
+    if s3.s3_client is None:
+        print('Error: S3 client is not initialized')
+        return
+
     response = s3.list_buckets()
     #print(response)
     if response['ResponseMetadata']['HTTPStatusCode'] == 200:

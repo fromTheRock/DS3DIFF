@@ -44,7 +44,7 @@ class S3Util:
         self._s3_client.upload_file(local_file_path, bucket_name, s3_file_path_name)
 
     def _get_bucket_names_to_create(self) -> list[str]:
-        """https://stackoverflow.com/questions/45870945/use-os-listdir-to-show-directories-only"""
+        '''https://stackoverflow.com/questions/45870945/use-os-listdir-to-show-directories-only'''
         return [
             file_name
             for file_name in os.listdir(self._local_s3_objects_path)
@@ -52,5 +52,5 @@ class S3Util:
         ]
 
     def _get_file_paths_in_directory_path(self, directory_path: Path) -> list[Path]:
-        """https://stackoverflow.com/questions/25380774/upload-a-directory-to-s3-with-boto"""
+        '''https://stackoverflow.com/questions/25380774/upload-a-directory-to-s3-with-boto'''
         return [Path(root, file_name) for root, _dirs, files in os.walk(directory_path) for file_name in files]

@@ -1,10 +1,13 @@
+'''
+Module to work with files in filesytem folders
+'''
 import os
 import sys
 import datetime
 from stat import S_ISDIR, S_ISREG
 
 class FileData:
-    '''Base object representina a filesyssemt object
+    '''Base object representing the file metadata from the filesysstem
     '''
     path = ""
     name = ""

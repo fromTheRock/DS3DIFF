@@ -2,7 +2,7 @@ from src.config import Config
 from src.files.s3_ops import S3Ops
 
 def get_valid_bucket_number(max_buckets: int) -> int:
-    """
+    '''
     Get and validate user input for bucket selection.
     
     Args:
@@ -10,7 +10,7 @@ def get_valid_bucket_number(max_buckets: int) -> int:
         
     Returns:
         int: Validated bucket number
-    """
+    '''
     while True:
         try:
             value = input('Which bucket do you want to list? (Enter a number): ')
@@ -24,10 +24,13 @@ def get_valid_bucket_number(max_buckets: int) -> int:
 
 
 def main() -> None:
-    """Main entry point of the script"""
+    '''Main entry point of the script'''
 
     cfg = Config()
     s3 = S3Ops(cfg)
+    if s3.s3_client is None:
+        print('Error: S3 client is not initialized')
+        return
     response = s3.list_buckets()
 
     if response['ResponseMetadata']['HTTPStatusCode'] == 200:
@@ -50,7 +53,7 @@ if __name__ == "__main__":
     main()
 
 #def main() -> None:
-#    """Main entry point of the script"""
+#    '''Main entry point of the script'''
 #
 #    s3 = S3Ops()
 #    response = s3.list_buckets()
