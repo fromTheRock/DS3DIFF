@@ -1,3 +1,7 @@
+'''
+Sample module that ask for the bucket to open
+and get the list of all object in the bucket chosen.
+'''
 from src.config import Config
 from src.files.s3_ops import S3Ops
 
@@ -38,13 +42,13 @@ def main() -> None:
     else:
         print(f'Error: {response["ResponseMetadata"]["HTTPStatusCode"]}')
         return
-    
+
     bucket_list = s3.print_bucket_names(response)
     if bucket_list:
         selected_num = get_valid_bucket_number(len(bucket_list))
         selected_bucket = bucket_list[selected_num - 1]['Name']
         print(f"You selected bucket: {selected_bucket}")
-        
+ 
         print(s3.list_files(selected_bucket))
     else:
         print("No buckets found")

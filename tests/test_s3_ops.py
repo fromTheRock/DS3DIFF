@@ -24,9 +24,10 @@ from tests.s3_util import S3Util
 ENV_S3_REGION = 'us-east-1'
 ENV_S3_ENDPOINT = 'http://127.0.0.1:5000'
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="package")
 def set_aws_credentials():
-    ''' "
+    '''
+    Set AWS access info for moto server
     http://docs.getmoto.org/en/latest/docs/getting_started.html#how-do-i-avoid-tests-from-mutating-my-real-infrastructure
     '''
     os.environ['AWS_ACCESS_KEY_ID'] = 'testing'
@@ -39,7 +40,7 @@ def set_aws_credentials():
     os.environ['S3_ENDPOINT'] = ENV_S3_ENDPOINT
 
 # Note: pick an appropriate fixture "scope" for your use case
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="package")
 def moto_server():
     '''Fixture to run a mocked AWS server for testing.'''
     # Note: pass `port=0` to get a random free port.
@@ -50,7 +51,7 @@ def moto_server():
     server.stop()
     print(f"Closed Thread with MotoServer running on {host}:{port}...")
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="package")
 def s3_client(set_aws_credentials, moto_server):
     '''
     Return a mocked S3 client
@@ -63,6 +64,14 @@ def s3_client(set_aws_credentials, moto_server):
         yield s3
         # Cleanup code here (runs after the test)
         # For example, delete test buckets, files, etc.
+
+
+@pytest.fixture(scope="package", autouse=True)
+def get_s3_ops(s3_client):
+    with mock_aws():
+        cfg = Config()
+        s3_ops = S3Ops(cfg)
+        yield s3_ops
 
 def test_config_read_env(set_aws_credentials):
     '''
@@ -87,11 +96,10 @@ def test_s3_using_moto_fixture(s3_client, moto_server):
         assert len(buckets["Buckets"]) == 1
 
 @mock_aws
-def test_list_buckets(set_aws_credentials, moto_server, s3_client):
-    # Test S3Ops.list_buckets()
-    cfg = Config()
-    print(f'test_list_buckets: Environ Endpoint: {cfg.s3_endpoint}; Region: {cfg.s3_region}')
-    s3_ops = S3Ops(cfg)
+def test_list_buckets(get_s3_ops):
+    ''' Test S3Ops.list_buckets()
+    '''
+    s3_ops = get_s3_ops
     
     # Verify s3 connection
     assert s3_ops is not None
@@ -102,6 +110,42 @@ def test_list_buckets(set_aws_credentials, moto_server, s3_client):
     # Verify upload
     assert list_buckets["Buckets"] is not None
     assert len(list_buckets["Buckets"]) > 0
+
+def test_list_files(get_s3_ops):
+    ''' Test S3Ops.list_objects()
+    '''
+    s3_ops = get_s3_ops
+
+    # Verify s3 connection
+    assert s3_ops is not None
+    assert s3_ops.s3_client is not None
+
+    file_list = s3_ops.list_files("bucket1")
+
+    print(file_list)
+
+    # Verify upload
+    assert file_list["Contents"] is not None
+    assert len(file_list["Contents"]) > 0
+    assert file_list["Contents"][0]["Key"] == "sample-1.txt"
+
+def test_list_file_meta_data (set_aws_credentials, moto_server, s3_client):
+    # Test S3Ops.list_objects()
+    cfg = Config()
+    s3_ops = S3Ops(cfg)
+
+    # Verify s3 connection
+    assert s3_ops is not None
+    assert s3_ops.s3_client is not None
+
+    file_dict = s3_ops.list_file_metadata("bucket1")
+
+    print(file_dict)
+
+    # Verify upload
+    assert len(file_dict.values()) > 0
+    assert file_dict["sample-1.txt"] is not None
+
 
 if __name__ == "__main__":
     pytest.main()

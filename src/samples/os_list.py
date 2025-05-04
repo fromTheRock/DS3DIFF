@@ -3,45 +3,8 @@ Module to work with files in filesytem folders
 '''
 import os
 import sys
-import datetime
 from stat import S_ISDIR, S_ISREG
-
-class FileData:
-    '''Base object representing the file metadata from the filesysstem
-    '''
-    path = ""
-    name = ""
-    extension = ""
-    size = 0
-    creation_date = None
-    last_modification_date = None
-
-    def __init__(self, path: str, name: str, size: int, 
-                 creation_date: int, last_modification_date: int) -> None:
-        self.path = path
-        self.name = name
-        _, file_extension = os.path.splitext(name)
-        self.extension =  file_extension[1:] if file_extension else ""
-        self.size = size
-        self.creation_date = datetime.datetime.fromtimestamp(creation_date, tz=datetime.timezone.utc)
-        self.last_modification_date = datetime.datetime.fromtimestamp(last_modification_date, tz=datetime.timezone.utc)
-
-    def get_size(self) -> str:
-        if self.size < 1024:
-            return f"{self.size} B"
-        elif self.size < 1024 * 1024:
-            return f"{self.size / 1024:.2f} KB"
-        elif self.size < 1024 * 1024 * 1024:
-            return f"{self.size / (1024 * 1024):.2f} MB"
-        elif self.size < 1024 * 1024 * 1024 * 1024:
-            return f"{self.size / (1024 * 1024 * 1024):.2f} GB"
-        else:
-            return f"{self.size / (1024 * 1024 * 1024 * 1024):.2f} TB"
-
-    def __str__(self):
-        #return f"Path: {self.path}, Name: {self.name}, Extension: {self.extension}, Size: {self.size}, Creation Date: {self.creation_date}, Last Modification Date: {self.last_modification_date}"
-        return f"{self.path}, Size: {self.get_size()}, Creation Date: {self.creation_date}, Last Modification Date: {self.last_modification_date}"
-
+import src.files.os_dir as os_dir
 
 def walktree(top, callback):
     '''recursively descend the directory tree rooted at top,
@@ -73,11 +36,9 @@ def extract_file_data(path: str, list_files: list) -> list:
         if S_ISDIR(mode):
             continue
         # If it's a regular file...
-        elif S_ISREG(mode):
-            fStat = os.stat(pathname)
-            f_json.append(FileData(os.path.join(path,fl),
-                        fl, fStat.st_size, 
-                        fStat.st_birthtime, fStat.st_mtime))
+        if S_ISREG(mode):
+            #f_stat = os.stat(pathname)
+            f_json.append(os_dir.get_file_data(pathname))
 
     return f_json
 

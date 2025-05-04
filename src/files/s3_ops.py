@@ -6,8 +6,10 @@ the right parameters to the boto3 funtions
 '''
 from typing import Dict, Any
 import boto3
+from botocore.exceptions import ClientError
 import src.config as config
 from src.config import Config
+from src.files.file_metadata import FileMetadata
 
 class S3Ops:
     '''Utility class for S3 operations'''
@@ -26,8 +28,6 @@ class S3Ops:
         self.cfg = _cfg
         self.s3_client = self.get_s3_client()
 
-    #@classmethod
-    #@staticmethod
     def get_s3_client(self) -> boto3.client:
         '''
         Create and return an S3 client with the endpoint specified in S3Ops object.
@@ -44,7 +44,7 @@ class S3Ops:
                                           endpoint_url=self.cfg.s3_endpoint,
                                           region_name=self.cfg.s3_region)
             return self.s3_client
-        except Exception as e:
+        except ClientError as e:
             print(f"Error creating S3 client for endpoint {self.cfg.s3_endpoint} and region {self.cfg.s3_region}")
             print(f"  get_s3_client Error: {str(e)}")
             self.s3_client = None
@@ -65,14 +65,13 @@ class S3Ops:
 
     def list_files(self, bucket_name: str) -> Dict[str, Any]:
         '''
-        Get list of files in a S3 bucket.
+        Get the data returned by in a S3 bucket.
 
         Args:
-            endpoint_url (str): The S3 endpoint URL
             bucket_name (str): The name of the S3 bucket
 
         Returns:
-            Dict[str, Any]: Response containing file information
+            Dict[str, Any]: Response containing file information in AWS format
         '''
         #s3_client = cls.get_s3_client(endpoint_url)
         if self.s3_client is None:
@@ -95,6 +94,42 @@ class S3Ops:
         for i, bucket in enumerate(bucket_list, 1):
             print(f"{i}: {bucket['Name']}")
         return bucket_list
+
+    def _list_file_metadata(self, list_objects: Dict[str, Any]) -> Dict[str, FileMetadata]:
+        '''
+        Internal use only. Use list_file_metadata(bucket) instead.
+        Returns a dictionary of object file metadata from the output of list_files()
+        '''
+        file_dict = dict()
+
+        for obj in list_objects['Contents']:
+            file_name = obj['Key']
+            file_size = obj['Size']
+            file_last_modified = obj['LastModified']
+
+            file_metadata = FileMetadata(file_name, file_name, file_size, None, file_last_modified)
+            file_dict[file_name] = file_metadata
+
+            print(file_metadata)
+
+        return file_dict
+
+
+    def list_file_metadata(self, bucket_name: str) -> Dict[str, FileMetadata]:
+        '''
+        Get the data returned by in a S3 bucket.
+
+        Args:
+            bucket_name (str): The name of the S3 bucket
+
+        Returns:
+            Dict[str, FileMetadata]: list of objects FileMetadata
+        '''
+        #s3_client = cls.get_s3_client(endpoint_url)
+        if self.s3_client is None:
+            return None
+        list_objects = self.list_files(bucket_name)
+        return self._list_file_metadata(list_objects)
 
 def main() -> None:
     '''Main entry point of the script'''
