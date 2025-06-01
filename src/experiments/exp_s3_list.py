@@ -55,29 +55,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
-#def main() -> None:
-#    '''Main entry point of the script'''
-#
-#    s3 = S3Ops()
-#    response = s3.list_buckets()
-#    #print(response)
-#    if response['ResponseMetadata']['HTTPStatusCode'] == 200:
-#        print('S3 buckets listed successfully.')
-#    else:
-#        print(f'Error: {response["ResponseMetadata"]["HTTPStatusCode"]}')
-#        return
-#    
-#    bucket_list = s3.print_bucket_names(response)
-#    if bucket_list:
-#        selected_num = getValidBucketNumber(len(bucket_list))
-#        selected_bucket = bucket_list[selected_num - 1]['Name']
-#        print(f"You selected bucket: {selected_bucket}")
-#        
-#        print(s3.list_files(selected_bucket))
-#    else:
-#        print("No buckets found")
-#
-#if __name__ == "__main__":
-#    main()
-#

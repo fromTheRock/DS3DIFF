@@ -61,7 +61,7 @@ def main() -> list:
 
     return f_json
 
-if __name__ == "__main__":  
+if __name__ == "__main__":
     files_json = main()
 
     for file in files_json:
