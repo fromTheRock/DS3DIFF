@@ -58,6 +58,10 @@ class S3Ops:
             print(f"  get_s3_client Error: {str(e)}")
             self.s3_client = None
             return None
+        except Exception as e:
+            print(f"Generic Error creating S3 client: {str(e)}")
+            self.s3_client = None
+            return None
 
     def list_buckets(self) -> Any:
         """
@@ -199,43 +203,49 @@ class S3Ops:
                         s3_object["Metadata"]["last-modified"]
                     )
                     if "Metadata" in s3_object
-                        and "last-modified" in s3_object["Metadata"]
+                    and "last-modified" in s3_object["Metadata"]
                     else None
-                )
+                ),
             }
         except Exception:
             return None
 
-    def get_s3_file_modified_date(self,
-                                bucket_name: str,
-                                s3_key: str) -> Optional[datetime.datetime]:
-        '''
+    def get_s3_file_modified_date(
+        self, bucket_name: str, s3_key: str
+    ) -> Optional[datetime.datetime]:
+        """
         Get the last modified date of an S3 object.
-        
+
         Args:
             bucket_name: Name of the S3 bucket
             s3_key: Key (path) of the S3 object
-            
+
         Returns:
             The last modified date of the S3 object or None if not found
-        '''
+        """
         try:
             s3_object = self.s3_client.head_object(Bucket=bucket_name, Key=s3_key)
 
             # Try to get the last modified date from metadata first (our custom field)
-            if 'Metadata' in s3_object and 'last-modified' in s3_object['Metadata']:
-                return datetime.datetime.fromisoformat(s3_object['Metadata']['last-modified'])
+            if "Metadata" in s3_object and "last-modified" in s3_object["Metadata"]:
+                return datetime.datetime.fromisoformat(
+                    s3_object["Metadata"]["last-modified"]
+                )
 
             # Fall back to S3's LastModified
-            return s3_object['LastModified']
+            return s3_object["LastModified"]
 
         except Exception:
             return None
+
 
 def main() -> None:
     """Main entry point of the script"""
     cfg = Config()
     s3 = S3Ops(cfg)
+    if s3.s3_client is None:
+        print("Error: S3 client is not initialized")
+        return
     response = s3.list_buckets()
 
     # print(response)
