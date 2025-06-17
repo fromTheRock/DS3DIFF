@@ -58,6 +58,10 @@ class S3Ops:
             print(f"  get_s3_client Error: {str(e)}")
             self.s3_client = None
             return None
+        except Exception as e:
+            print(f"Generic Error creating S3 client: {str(e)}")
+            self.s3_client = None
+            return None
 
     def list_buckets(self) -> Any:
         """
@@ -236,6 +240,9 @@ def main() -> None:
     """Main entry point of the script"""
     cfg = Config()
     s3 = S3Ops(cfg)
+    if s3.s3_client is None:
+        print("Error: S3 client is not initialized")
+        return
     response = s3.list_buckets()
 
     # print(response)
