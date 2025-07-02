@@ -5,10 +5,9 @@ I like have a utility class that work with Config class to use
 the right parameters to the boto3 funtions
 """
 
-import datetime
-from typing import Dict, Any, Tuple, Optional
-from pathlib import Path
+from typing import Dict, Any, Tuple, List
 import hashlib
+import os
 
 import boto3
 from botocore.exceptions import ClientError
@@ -120,9 +119,10 @@ class S3Ops:
             file_name = obj["Key"]
             file_size = obj["Size"]
             file_last_modified = obj["LastModified"]
+            file_tag = obj["ETag"].strip('"')
 
             file_metadata = FileMetadata(
-                file_name, file_name, file_size, None, file_last_modified
+                file_name, file_name, file_size, None, file_last_modified, file_tag
             )
             file_dict[file_name] = file_metadata
 
@@ -146,40 +146,6 @@ class S3Ops:
         list_objects = self.list_files(bucket_name)
         return self._list_file_metadata(list_objects)
 
-    def compare_files_using_etag(
-        self, bucket_name: str, s3_key: str, local_file_path: Path
-    ) -> Tuple[str, str, bool]:
-        """
-        Compare a local file with its S3 counterpart using ETags.
-
-        Args:
-            bucket_name: Name of the S3 bucket
-            s3_key: Key (path) of the S3 object
-            local_file_path: Path to the local file
-
-        Returns:
-            Tuple containing:
-            - S3 object's ETag (without quotes)
-            - Local file's calculated MD5 hash
-            - Boolean indicating if the files are identical (True) or different (False)
-        """
-        try:
-            # Get S3 object's ETag
-            s3_object = self.s3_client.head_object(Bucket=bucket_name, Key=s3_key)
-            s3_etag = s3_object["ETag"].strip('"')  # Remove surrounding quotes
-
-            # Calculate MD5 hash of local file
-            with open(local_file_path, "rb") as f:
-                local_md5 = hashlib.md5(f.read()).hexdigest()
-
-            # Compare ETags (they match if the files are identical)
-            files_match = s3_etag == local_md5
-
-            return s3_etag, local_md5, files_match
-
-        except Exception as e:
-            raise Exception(f"Error comparing files using ETag: {e}")
-
     def get_s3_object_info(self, bucket_name: str, s3_key: str) -> dict:
         """
         Get comprehensive information about an S3 object including ETag and LastModified.
@@ -198,45 +164,206 @@ class S3Ops:
                 "LastModified": s3_object["LastModified"],
                 "ContentLength": s3_object["ContentLength"],
                 "Metadata": s3_object["Metadata"],
-                "CustomLastModified": (
-                    datetime.datetime.fromisoformat(
-                        s3_object["Metadata"]["last-modified"]
-                    )
-                    if "Metadata" in s3_object
-                    and "last-modified" in s3_object["Metadata"]
-                    else None
-                ),
+                #Real files in a DS3 buckets does not have CustomLastModified
+                # "CustomLastModified": (
+                #     datetime.datetime.fromisoformat(
+                #         s3_object["Metadata"]["last-modified"]
+                #     )
+                #     if "Metadata" in s3_object
+                #     and "last-modified" in s3_object["Metadata"]
+                #     else None
+                # ),
             }
         except Exception:
             return None
-
-    def get_s3_file_modified_date(
-        self, bucket_name: str, s3_key: str
-    ) -> Optional[datetime.datetime]:
+      
+    def calculate_s3_etag(self, file_path: str, chunk_size: int = 8 * 1024 * 1024) -> str:
         """
-        Get the last modified date of an S3 object.
-
+        Calculate the S3 ETag for a file, supporting both single-part and multipart uploads.
+        
+        Args:
+            file_path: Path to the local file
+            chunk_size: Size of each chunk in bytes (default: 8MB, S3's default chunk size)
+            
+        Returns:
+            The calculated ETag string (without quotes)
+        """
+        file_size = os.path.getsize(file_path)
+        
+        # For small files (single part), just return the MD5
+        if file_size <= chunk_size:
+            with open(file_path, 'rb') as f:
+                return hashlib.md5(f.read()).hexdigest()
+        
+        # For multipart uploads
+        md5s: List[bytes] = []
+        with open(file_path, 'rb') as f:
+            while True:
+                data = f.read(chunk_size)
+                if not data:
+                    break
+                md5s.append(hashlib.md5(data).digest())
+        
+        # Combine the MD5 hashes and add the number of parts
+        combined_md5 = hashlib.md5(b''.join(md5s)).hexdigest()
+        part_count = len(md5s)
+        
+        return f"{combined_md5}-{part_count}"
+        
+    def compare_files_using_etag(
+        self, bucket_name: str, s3_key: str, local_file_path: str, chunk_size: int = 8 * 1024 * 1024
+    ) -> Tuple[str, str, bool]:
+        """
+        Compare a local file with its S3 counterpart using ETags, supporting multipart uploads.
+        
         Args:
             bucket_name: Name of the S3 bucket
             s3_key: Key (path) of the S3 object
-
+            local_file_path: Path to the local file
+            chunk_size: Size of each chunk in bytes (default: 8MB, S3's default chunk size)
+            
         Returns:
-            The last modified date of the S3 object or None if not found
+            Tuple containing:
+            - S3 object's ETag (without quotes)
+            - Local file's calculated ETag
+            - Boolean indicating if the files are identical (True) or different (False)
         """
         try:
+            # Get S3 object's ETag
             s3_object = self.s3_client.head_object(Bucket=bucket_name, Key=s3_key)
-
-            # Try to get the last modified date from metadata first (our custom field)
-            if "Metadata" in s3_object and "last-modified" in s3_object["Metadata"]:
-                return datetime.datetime.fromisoformat(
-                    s3_object["Metadata"]["last-modified"]
-                )
-
-            # Fall back to S3's LastModified
-            return s3_object["LastModified"]
-
-        except Exception:
-            return None
+            s3_etag = s3_object["ETag"].strip('"')  # Remove surrounding quotes
+            
+            # Calculate local file's ETag
+            local_etag = self.calculate_s3_etag(local_file_path, chunk_size)
+            
+            # Compare ETags
+            files_match = s3_etag == local_etag
+            
+            return s3_etag, local_etag, files_match
+            
+        except Exception as e:
+            raise Exception(f"Error comparing files using multipart ETag: {e}")
+            
+    def calculate_directory_etag(self, directory_path: str, chunk_size: int = 8 * 1024 * 1024) -> str:
+        """
+        Calculate a composite ETag for a directory by combining ETags of all files within it.
+        
+        Args:
+            directory_path: Path to the local directory
+            chunk_size: Size of each chunk in bytes for file ETag calculations
+            
+        Returns:
+            A composite ETag string representing the directory
+        """
+        if not os.path.isdir(directory_path):
+            raise ValueError(f"{directory_path} is not a directory")
+            
+        # Get all files in the directory (recursively)
+        all_files = []
+        for root, _, files in os.walk(directory_path):
+            for file in files:
+                all_files.append(os.path.join(root, file))
+                
+        # Sort files for consistent results
+        all_files.sort()
+        
+        # Calculate ETag for each file and combine them
+        file_etags = []
+        for file_path in all_files:
+            # Get relative path for consistent hashing regardless of directory location
+            rel_path = os.path.relpath(file_path, directory_path)
+            file_etag = self.calculate_s3_etag(file_path, chunk_size)
+            file_etags.append(f"{rel_path}:{file_etag}")
+            
+        # Create a composite hash from all file ETags
+        combined_string = ",".join(file_etags)
+        return hashlib.md5(combined_string.encode()).hexdigest()
+        
+    def compare_directory_with_s3_prefix(
+        self, bucket_name: str, s3_prefix: str, local_dir_path: str, chunk_size: int = 8 * 1024 * 1024
+    ) -> Dict[str, Any]:
+        """
+        Compare a local directory with objects under an S3 prefix.
+        
+        Args:
+            bucket_name: Name of the S3 bucket
+            s3_prefix: Prefix (path) in S3 to compare with
+            local_dir_path: Path to the local directory
+            chunk_size: Size of each chunk in bytes for ETag calculations
+            
+        Returns:
+            Dictionary with comparison results including:
+            - directory_etag: Composite ETag for the local directory
+            - matching_files: List of files that match between local and S3
+            - different_files: List of files with different ETags
+            - missing_in_s3: Files in local directory not found in S3
+            - missing_locally: Files in S3 not found in local directory
+        """
+        if not os.path.isdir(local_dir_path):
+            raise ValueError(f"{local_dir_path} is not a directory")
+            
+        # Ensure s3_prefix ends with '/' if not empty
+        if s3_prefix and not s3_prefix.endswith('/'):
+            s3_prefix += '/'
+            
+        # Get all S3 objects under the prefix
+        s3_objects = {}
+        paginator = self.s3_client.get_paginator('list_objects_v2')
+        for page in paginator.paginate(Bucket=bucket_name, Prefix=s3_prefix):
+            if 'Contents' in page:
+                for obj in page['Contents']:
+                    key = obj['Key']
+                    # Skip "directory" objects (empty objects with trailing slash)
+                    if not key.endswith('/'):
+                        s3_objects[key] = obj['ETag'].strip('"')
+        
+        # Get all local files
+        local_files = {}
+        for root, _, files in os.walk(local_dir_path):
+            for file in files:
+                file_path = os.path.join(root, file)
+                rel_path = os.path.relpath(file_path, local_dir_path)
+                # Convert Windows path separators to forward slashes for S3 compatibility
+                rel_path = rel_path.replace('\\', '/')
+                s3_key = s3_prefix + rel_path
+                local_files[s3_key] = file_path
+                
+        # Compare files
+        matching_files = []
+        different_files = []
+        missing_in_s3 = []
+        missing_locally = []
+        
+        # Check local files against S3
+        for s3_key, local_path in local_files.items():
+            if s3_key in s3_objects:
+                local_etag = self.calculate_s3_etag(local_path, chunk_size)
+                if local_etag == s3_objects[s3_key]:
+                    matching_files.append(s3_key)
+                else:
+                    different_files.append({
+                        'key': s3_key,
+                        'local_etag': local_etag,
+                        's3_etag': s3_objects[s3_key]
+                    })
+            else:
+                missing_in_s3.append(s3_key)
+                
+        # Check for files in S3 but not locally
+        for s3_key in s3_objects:
+            if s3_key not in local_files:
+                missing_locally.append(s3_key)
+                
+        # Calculate directory composite ETag
+        directory_etag = self.calculate_directory_etag(local_dir_path, chunk_size)
+        
+        return {
+            'directory_etag': directory_etag,
+            'matching_files': matching_files,
+            'different_files': different_files,
+            'missing_in_s3': missing_in_s3,
+            'missing_locally': missing_locally
+        }
 
 
 def main() -> None:

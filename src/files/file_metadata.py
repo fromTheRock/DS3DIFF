@@ -16,15 +16,23 @@ class FileMetadata:
     size = 0
     creation_date = None
     last_modification_date = None
+    etag = None
 
     def __init__(
-        self, path: str, name: str, size: int, creation_date, last_modification_date
+        self,
+        path: str,
+        name: str,
+        size: int,
+        creation_date,
+        last_modification_date,
+        etag: str = None,
     ) -> None:
         self.path = path
         self.name = name
         _, file_extension = os.path.splitext(name)
         self.extension = file_extension[1:] if file_extension else ""
         self.size = size if size else None
+        self.etag = etag
 
         if creation_date is None:
             self.creation_date = None
@@ -43,7 +51,7 @@ class FileMetadata:
                 )
             except ValueError:
                 self.creation_date = None
-        
+
         if last_modification_date is None:
             self.last_modification_date = None
         if isinstance(last_modification_date, datetime.datetime):
@@ -81,22 +89,28 @@ class FileMetadata:
         return f"""{self.name}, Size: {self.get_size()}, \
             Creation Date: {self.creation_date}, \
             Last Modification Date: {self.last_modification_date}"""
-            
+
     def __eq__(self, other):
         """
         Define equality comparison between two FileMetadata objects.
         Two files are considered equal if they have the same path, name, and size.
-        
+
         Args:
             other: Another FileMetadata object to compare with
-            
+
         Returns:
             bool: True if the objects are equal, False otherwise
         """
         if not isinstance(other, FileMetadata):
             return False
-            
-        return (self.name == other.name and 
-                self.size == other.size and
-                self.last_modification_date == other.last_modification_date and
-                (self.creation_date is None or other.creation_date is None or self.creation_date == other.creation_date))
+
+        return (
+            self.name == other.name
+            and self.size == other.size
+            and self.last_modification_date == other.last_modification_date
+            and (
+                self.creation_date is None
+                or other.creation_date is None
+                or self.creation_date == other.creation_date
+            )
+        )

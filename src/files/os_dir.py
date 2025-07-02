@@ -2,6 +2,7 @@
 Utility Module to scan directories on local file system.
 '''
 import os
+
 from src.files.file_metadata import FileMetadata
 
 def get_file_data(path: str) -> FileMetadata:
