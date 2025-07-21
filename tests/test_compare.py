@@ -1,9 +1,6 @@
 import os
-import os_dir
 
-import src.files.os_dir
-import src.files.s3_ops
-import src.files.file_metadata
+import src.files.os_dir as os_dir
 
 from test_s3_ops import set_aws_credentials, moto_server, s3_client, get_s3_ops
 from test_os_dir import get_module_path
@@ -24,3 +21,6 @@ def test_compare_file(get_s3_ops, get_module_path):
     assert file_s3.size == file_os.size
     assert file_s3.last_modification_date >= file_os.last_modification_date
     assert file_s3.etag == s3_ops.calculate_s3_etag(path_os)
+
+def test_compare_dir(get_s3_ops, get_module_path):
+    pass

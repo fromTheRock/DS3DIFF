@@ -6,7 +6,6 @@ and get the list of all object in the bucket chosen.
 import os
 from src.config import Config
 from src.files.s3_ops import S3Ops
-from typing import Dict
 
 class ArgumentQuestion:
 
