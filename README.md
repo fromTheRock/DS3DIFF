@@ -27,7 +27,7 @@ Unfortunately there are different syntax to do that even using only Window:
 PowerShell command:
 
 ```PowerShell
-#Often I need to enable the Execution Policy in order to run scripts or set environment variables
+#Often I need to enable the Execution Policy in order to run scripts or set environment variablesg
 Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process; .\venv\Scripts\activate
 $env:PYTHONPATH = ".;src;src\files"
 ```

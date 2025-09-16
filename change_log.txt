@@ -1,0 +1,45 @@
+
+0.1.2d
+  Now ds3diff starts doing a right comparation of a tree of files / folders.
+  The output is stil very bad.
+
+0.1.2c
+  Starting putting things together but I'm not there yet
+  I need to compare directory or tree, not single files.
+  
+0.1.2
+  NOW ALL TEST PASS (also test_compare that did not pass in previous versions)
+  FOUND AN IMPERFERCT SOLUTION TO THE CONCEPTUAL PROBLEM OF VERSION 1.1.1b AND 
+  FOOLOWING:
+  . There is no way to chec last-modified-date between local file and S3 object.
+    For sure S3 last-modified-date must be greater of local file date, othervise 
+    S3 object is obsolite.
+  . For all files where S3.last_modified_date >= local_file.last_modified_date:
+    I have to compare S3 Object eTag whith the one calculated on the local file.
+
+0.1.1c
+    NOT ALL TESTS PASS
+    - Still working on experiments to find a right way to compare file on local
+      disks with files on S3 (cannot compare LastModified date
+    - arguments_loader.py a mudule I want to use in all module and experiments
+      to load argument from env or asking them on console.
+      Environment variable are safe (I am sure not to save server credentina in
+      the GIT Repository). However, they are annoying to use if the argoments
+      often change in different modules. Better to ask then on the console.
+      TODO: better to add a validation procedure to "argumets_loader"
+    - experiment files now use rich library to show more readable output
+
+0.1.1b 
+    NOT ALL TESTS PASSED
+    - Renamed the samples files in experiments to avoid
+    confusion between test, experiment end future
+    product modules
+    - test_compare.py does not pass.
+
+    CONCEPTUAL PROBLEM - I tied to compare File System
+    file with S3 objects looking for size and last-modified
+    date, but S3 does not preserve the original date
+    TODO - I must calculate eTag for files in file-Sysstem
+    to make the process compatible with AWS S3 SYNC
+    way of working, or find some other workaround that
+    does not require compare last-modified date

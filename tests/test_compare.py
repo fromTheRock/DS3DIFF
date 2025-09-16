@@ -1,4 +1,5 @@
 import os
+import sys
 
 import src.files.os_dir as os_dir
 
@@ -23,4 +24,24 @@ def test_compare_file(get_s3_ops, get_module_path):
     assert file_s3.etag == s3_ops.calculate_s3_etag(path_os)
 
 def test_compare_dir(get_s3_ops, get_module_path):
-    pass
+    s3_ops = get_s3_ops
+
+    list_file_s3 = s3_ops.list_file_metadata("bucket1")
+    
+    path_os = os.path.join(get_module_path, 'os_fixture')
+    list_files = os.listdir(path_os)
+
+    f_json = os_dir.extract_file_data(path_os, list_files, sys.maxsize)
+
+    # Test the os_dir function with the current directory
+    for file in f_json:
+        print (f"os file: {file}")
+        
+        file_s3 = list_file_s3[file]
+        print (f"s3 file: {file_s3}")
+
+        assert file_s3 is not None
+        assert file_s3.name == file.name
+        assert file_s3.size == file.size
+        assert file_s3.last_modification_date >= file.last_modification_date
+        assert file_s3.etag == s3_ops.calculate_s3_etag(file.path) if file.type == 'file' else None

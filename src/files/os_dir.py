@@ -23,7 +23,7 @@ def get_file_data(path: str) -> FileMetadata:
 
 
 def extract_file_data(path: str, list_files: list, deph: int) -> list:
-    '''Returna a list of files in JSon format
+    '''Returns a list of files in JSon format
     '''
     f_json = []
     for fl in list_files:
