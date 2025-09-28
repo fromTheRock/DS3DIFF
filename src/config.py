@@ -40,3 +40,18 @@ class Config:
         self.s3_endpoint = _end_pnt
         self.s3_region = _region
         print(f'Final Endpoint: {_end_pnt}; Region: {_region}')
+
+    def ask_for_s3_data(self) -> None:
+        '''
+        Ask the user for S3 data if not provided in the environment variables.
+        '''
+        if self.s3_region is None or self.s3_region == DEFAULT_S3_REGION:
+            msg = f'Which region do you want to use? (default: {DEFAULT_S3_REGION}): '
+            self.s3_region = input(msg)
+            if self.s3_region == '':
+                self.s3_region = DEFAULT_S3_REGION
+        if self.s3_endpoint is None or self.s3_endpoint == DEFAULT_S3_ENDPOINT:
+            msg = f'Which S3 endpoint do you want to use? (default: {DEFAULT_S3_ENDPOINT}): '
+            self.s3_endpoint = input(msg)
+            if self.s3_endpoint == '':
+                self.s3_endpoint = DEFAULT_S3_ENDPOINT

@@ -36,6 +36,19 @@ class ArgumentsLoader:
             return
         response = self.s3.list_buckets()
 
+        if response is None:
+            answer = input('S3 client is not initialized. Do you want to set the right S3 data?')
+            if answer.capitalize() == 'Y':
+                _cfg = self.s3.cfg
+                _cfg.ask_for_s3_data()
+                self.s3 = S3Ops(_cfg)
+                response = self.s3.list_buckets()
+            else:
+                return None
+        
+        if response is None:
+            return None
+        
         if response['ResponseMetadata']['HTTPStatusCode'] == 200:
             print('S3 buckets listed successfully.')
         else:

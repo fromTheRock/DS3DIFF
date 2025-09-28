@@ -6,6 +6,7 @@ TODO:
 - Add a easy way to merge different files
 """
 
+import contextlib
 from pathlib import Path
 from rich.console import Console
 
@@ -55,45 +56,48 @@ cfg: Config = None
 
 def main():
     """Main entry point of the script"""
-    loader = Loader()
-    questions = [
-        ArgumentQuestion("Directory?", OS_FOLDER),
-        ArgumentQuestion("S3 root path?", S3_FOLDER),
-    ]
 
-    selected_bucket = loader.get_bucket()
-    if selected_bucket is None:
-        print("No buckets found")
-        return
-    args = loader.get_arguments(questions)
+    # Process (main loop)
+    with contextlib.suppress(KeyboardInterrupt):
+        loader = Loader()
+        questions = [
+            ArgumentQuestion("Directory?", OS_FOLDER),
+            ArgumentQuestion("S3 root path?", S3_FOLDER),
+        ]
 
-    if args is None:
-        print("No arguments provided")
-        return
-    if args[OS_FOLDER] is None:
-        print("No directory to compare")
-        return
-    if args[S3_FOLDER] is None:
-        reply = input("No S3 written. Should I use the same local directory?")
-        if reply is None or reply.capitalize() == "N":
+        selected_bucket = loader.get_bucket()
+        if selected_bucket is None:
+            print("No buckets found")
             return
+        args = loader.get_arguments(questions)
 
-    # Convert string to Path object
-    os_path = Path(args[OS_FOLDER])
+        if args is None:
+            print("No arguments provided")
+            return
+        if args[OS_FOLDER] is None:
+            print("No directory to compare")
+            return
+        if args[S3_FOLDER] is None:
+            reply = input("No S3 written. Should I use the same local directory?")
+            if reply is None or reply.capitalize() == "N":
+                return
 
-    # For S3 paths (always use forward slashes)
-    if args[S3_FOLDER] is None:
-        s3_path = Path(os_path).as_posix()
-    else:
-        s3_path = args[S3_FOLDER]
+        # Convert string to Path object
+        os_path = Path(args[OS_FOLDER])
 
-    output = loader.s3.compare_directory_with_s3_prefix(
-        bucket_name=selected_bucket,
-        s3_prefix=s3_path,
-        local_dir_path=os_path
-    )
-    con = Console()
-    con.print(output)
+        # For S3 paths (always use forward slashes)
+        if args[S3_FOLDER] is None:
+            s3_path = Path(os_path).as_posix()
+        else:
+            s3_path = args[S3_FOLDER]
+
+        output = loader.s3.compare_directory_with_s3_prefix(
+            bucket_name=selected_bucket,
+            s3_prefix=s3_path,
+            local_dir_path=os_path
+        )
+        con = Console()
+        con.print(output)
 
 
 if __name__ == "__main__":

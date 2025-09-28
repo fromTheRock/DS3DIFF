@@ -1,4 +1,11 @@
 
+0.1.3
+  This version is working in a limited way:
+  - the README still needs editing
+  - the output give the needed information in a bad way
+  - there are no command to do copy to e from the S3 archive
+  - the tests comparing folder does not work yet
+
 0.1.2d
   Now ds3diff starts doing a right comparation of a tree of files / folders.
   The output is stil very bad.
