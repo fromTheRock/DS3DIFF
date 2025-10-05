@@ -11,7 +11,6 @@ from pathlib import Path
 from rich.console import Console
 
 from src.files.s3_ops import S3Ops
-from src.config import Config
 
 from src.arguments_loader import ArgumentsLoader as Loader
 from src.arguments_loader import ArgumentQuestion
@@ -23,8 +22,6 @@ S3_FOLDER = "S3_PREFIX"
 # Initialize global variables
 dict_os = dict()
 s3: S3Ops = None
-cfg: Config = None
-
 
 #def compare_dir(bucket: str, dir: str):
 #    """Compare a bucket folder wit ao os folder on the local PC"""

@@ -1,14 +1,15 @@
 from rich import print as rprint
 
+from src.arguments_loader import ArgumentsLoader
 from src.files.s3_ops import S3Ops
-from src.config import Config
 
 
 def main() -> None:
     '''Main entry point of the script'''
 
-    cfg = Config()
-    s3 = S3Ops(cfg)
+    loader = ArgumentsLoader()
+    s3 = loader.s3
+
     if s3.s3_client is None:
         rprint('Error: S3 client is not initialized')
         return

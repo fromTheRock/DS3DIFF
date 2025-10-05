@@ -83,7 +83,7 @@ The list of dependencies above can be incomplete. I am going to keep the `requir
 When the enviornment is rightly configured (in the following section I explain these procedures), running the program is pretty easy:
 
 ```bash
-python ds3diff.py
+python src\ds3diff.py
 ```
 
 ### Configure the AWS Client

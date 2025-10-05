@@ -2,14 +2,12 @@
 Module to work with files in filesytem folders
 '''
 import os
-from stat import S_ISDIR, S_ISREG
 
 from rich.console import Console
 
 from src.arguments_loader import ArgumentQuestion
 from src.arguments_loader import ArgumentsLoader
 from src.files.os_dir import extract_file_data
-import src.files.os_dir as os_dir
 
 LIST_FOLDER = "LIST_FOLDER"
 con = Console()
