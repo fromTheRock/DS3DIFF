@@ -4,8 +4,9 @@ Mocking S3 archive from Fixture Folders.
 
 import datetime
 import os
-import boto3
 from pathlib import Path
+
+import boto3
 
 
 # From

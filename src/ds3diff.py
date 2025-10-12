@@ -8,6 +8,7 @@ TODO:
 
 import contextlib
 from pathlib import Path
+from rich import inspect
 from rich.console import Console
 
 from src.files.s3_ops import S3Ops
@@ -94,7 +95,14 @@ def main():
             local_dir_path=os_path
         )
         con = Console()
+
         con.print(output)
+        #inspect(output)
+
+        con.print (f'Matching files: {len(output["matching_files"])}')
+        con.print (f'Missing files in S3 bucket: {len(output["missing_in_s3"])}')
+        con.print (f'Missing in local directory: {len(output["missing_locally"])}')
+
 
 
 if __name__ == "__main__":
