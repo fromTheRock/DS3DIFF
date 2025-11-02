@@ -29,7 +29,7 @@ def main() -> None:
     else:
         rprint(f'Error: {response["ResponseMetadata"]["HTTPStatusCode"]}')
         return
-    
+
     rprint("Final Result:")
     rprint(f'Buckets: {response["Buckets"]}')
 

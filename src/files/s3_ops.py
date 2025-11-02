@@ -13,16 +13,9 @@ import boto3
 from botocore.exceptions import ClientError
 
 from src.files.file_metadata import FileMetadata
-
-
+from src.files.file_metadata import S3Consts
 class S3Ops:
     """Utility class for S3 operations"""
-
-    s3_client: boto3.client = None
-    s3_bucket_name: str = None
-
-    s3_endpoint: str = None
-    s3_region: str = None
 
     def __init__(self, _s3_endpoint: str, _s3_region: str):
         """
@@ -31,10 +24,14 @@ class S3Ops:
         Args:
             _s3_endpoint (str): The S3 endpoint URL. Defaults to None.
             _s3_region (str): The S3 region of the server.
+
         """
-        self.s3_endpoint = _s3_endpoint
-        self.s3_region = _s3_region
-        self.s3_client = self.get_s3_client()
+        self.s3_bucket_name: str = None
+
+        self.s3_endpoint: str = _s3_endpoint
+        self.s3_region: str = _s3_region
+
+        self.s3_client: boto3.client = self.get_s3_client()
 
     def get_s3_client(self) -> boto3.client:
         """
@@ -51,7 +48,8 @@ class S3Ops:
             return self.s3_client
         except ClientError as e:
             print(
-                f"Error creating S3 client for endpoint {self.s3_endpoint} and region {self.s3_region}"
+                f'''Error creating S3 client for endpoint {self.s3_endpoint} \
+                    and region {self.s3_region}'''
             )
             print(f"  get_s3_client Error: {str(e)}")
             self.s3_client = None
@@ -74,7 +72,16 @@ class S3Ops:
         return self.s3_client.list_buckets(BucketRegion=_region)
         # return self.s3_client.list_buckets()
 
-    def list_files(self, bucket_name: str) -> Dict[str, Any]:
+    #TODO: Add list_files with paginator:
+    #paginator = self.s3_client.get_paginator("list_objects_v2")
+    #for page in paginator.paginate(Bucket=bucket_name, Prefix=s3_prefix):
+    #    if "Contents" in page:
+    #        for obj in page["Contents"]:
+    #            key = obj["Key"]
+    #            # Skip "directory" objects (empty objects with trailing slash)
+    #            if not key.endswith("/"):
+    #                s3_objects[key] = obj["ETag"].strip('"')
+    def list_files(self, _bucket_name: str, _prefix: str | None = None) -> Dict[str, Any]:
         """
         Get the data returned by in a S3 bucket.
 
@@ -87,10 +94,12 @@ class S3Ops:
         # s3_client = cls.get_s3_client(endpoint_url)
         if self.s3_client is None:
             return None
-        return self.s3_client.list_objects_v2(Bucket=bucket_name)
+        if _prefix is None:
+            return self.s3_client.list_objects_v2(Bucket=_bucket_name)
+        return self.s3_client.list_objects_v2(Bucket=_bucket_name, Prefix=_prefix)
 
     @staticmethod
-    def print_bucket_names(buckets: Dict[str, Any]) -> None:
+    def print_bucket_names(_buckets: Dict[str, Any]) -> None:
         """
         Print the names of S3 buckets with numbers.
 
@@ -99,22 +108,21 @@ class S3Ops:
         Returns:
             list: List of bucket names
         """
-        bucket_list = buckets["Buckets"]
+        bucket_list = _buckets["Buckets"]
         print("Available buckets:")
         for i, bucket in enumerate(bucket_list, 1):
             print(f"{i}: {bucket['Name']}")
         return bucket_list
 
     def _list_file_metadata(
-        self, list_objects: Dict[str, Any]
-    ) -> Dict[str, FileMetadata]:
+        self, _list_objects: Dict[str, Any]) -> Dict[str, FileMetadata]:
         """
         Internal use only. Use list_file_metadata(bucket) instead.
         Returns a dictionary of object file metadata from the output of list_files()
         """
         file_dict = dict()
 
-        for obj in list_objects["Contents"]:
+        for obj in _list_objects["Contents"]:
             file_name = obj["Key"]
             file_size = obj["Size"]
             file_last_modified = obj["LastModified"]
@@ -129,7 +137,8 @@ class S3Ops:
 
         return file_dict
 
-    def list_file_metadata(self, bucket_name: str) -> Dict[str, FileMetadata]:
+    def list_file_metadata(self, _bucket_name: str,
+                           _prefix: str | None = None) -> Dict[str, FileMetadata]:
         """
         Get the data returned by in a S3 bucket.
 
@@ -142,10 +151,10 @@ class S3Ops:
         # s3_client = cls.get_s3_client(endpoint_url)
         if self.s3_client is None:
             return None
-        list_objects = self.list_files(bucket_name)
+        list_objects = self.list_files(_bucket_name, _prefix)
         return self._list_file_metadata(list_objects)
 
-    def get_s3_object_info(self, bucket_name: str, s3_key: str) -> dict:
+    def get_s3_object_info(self, _bucket_name: str, _s3_key: str) -> dict:
         """
         Get comprehensive information about an S3 object including ETag and LastModified.
 
@@ -157,7 +166,7 @@ class S3Ops:
             Dictionary containing S3 object metadata or None if not found
         """
         try:
-            s3_object = self.s3_client.head_object(Bucket=bucket_name, Key=s3_key)
+            s3_object = self.s3_client.head_object(Bucket=_bucket_name, Key=_s3_key)
             return {
                 "ETag": s3_object["ETag"].strip('"'),
                 "LastModified": s3_object["LastModified"],
@@ -177,7 +186,7 @@ class S3Ops:
             return None
 
     def calculate_s3_etag(
-        self, file_path: str, chunk_size: int = 8 * 1024 * 1024
+        self, _file_path: str, _chunk_size: int = 8 * 1024 * 1024
     ) -> str:
         """
         Calculate the S3 ETag for a file, supporting both single-part and multipart uploads.
@@ -189,18 +198,18 @@ class S3Ops:
         Returns:
             The calculated ETag string (without quotes)
         """
-        file_size = os.path.getsize(file_path)
+        file_size = os.path.getsize(_file_path)
 
         # For small files (single part), just return the MD5
-        if file_size <= chunk_size:
-            with open(file_path, "rb") as f:
+        if file_size <= _chunk_size:
+            with open(_file_path, "rb") as f:
                 return hashlib.md5(f.read()).hexdigest()
 
         # For multipart uploads
         md5s: List[bytes] = []
-        with open(file_path, "rb") as f:
+        with open(_file_path, "rb") as f:
             while True:
-                data = f.read(chunk_size)
+                data = f.read(_chunk_size)
                 if not data:
                     break
                 md5s.append(hashlib.md5(data).digest())
@@ -213,10 +222,10 @@ class S3Ops:
 
     def compare_files_using_etag(
         self,
-        bucket_name: str,
-        s3_key: str,
-        local_file_path: str,
-        chunk_size: int = 8 * 1024 * 1024,
+        _bucket_name: str,
+        _s3_key: str,
+        _local_file_path: str,
+        _chunk_size: int = 8 * 1024 * 1024,
     ) -> Tuple[str, str, bool]:
         """
         Compare a local file with its S3 counterpart using ETags, supporting multipart uploads.
@@ -235,11 +244,11 @@ class S3Ops:
         """
         try:
             # Get S3 object's ETag
-            s3_object = self.s3_client.head_object(Bucket=bucket_name, Key=s3_key)
+            s3_object = self.s3_client.head_object(Bucket=_bucket_name, Key=_s3_key)
             s3_etag = s3_object["ETag"].strip('"')  # Remove surrounding quotes
 
             # Calculate local file's ETag
-            local_etag = self.calculate_s3_etag(local_file_path, chunk_size)
+            local_etag = self.calculate_s3_etag(_local_file_path, _chunk_size)
 
             # Compare ETags
             files_match = s3_etag == local_etag
@@ -250,7 +259,7 @@ class S3Ops:
             raise Exception(f"Error comparing files using multipart ETag: {e}")
 
     def calculate_directory_etag(
-        self, directory_path: str, chunk_size: int = 8 * 1024 * 1024
+        self, _directory_path: str, _chunk_size: int = 8 * 1024 * 1024
     ) -> str:
         """
         Calculate a composite ETag for a directory by combining ETags of all files within it.
@@ -262,12 +271,12 @@ class S3Ops:
         Returns:
             A composite ETag string representing the directory
         """
-        if not os.path.isdir(directory_path):
-            raise ValueError(f"{directory_path} is not a directory")
+        if not os.path.isdir(_directory_path):
+            raise ValueError(f"{_directory_path} is not a directory")
 
         # Get all files in the directory (recursively)
         all_files = []
-        for root, _, files in os.walk(directory_path):
+        for root, _, files in os.walk(_directory_path):
             for file in files:
                 all_files.append(os.path.join(root, file))
 
@@ -278,8 +287,8 @@ class S3Ops:
         file_etags = []
         for file_path in all_files:
             # Get relative path for consistent hashing regardless of directory location
-            rel_path = os.path.relpath(file_path, directory_path)
-            file_etag = self.calculate_s3_etag(file_path, chunk_size)
+            rel_path = os.path.relpath(file_path, _directory_path)
+            file_etag = self.calculate_s3_etag(file_path, _chunk_size)
             file_etags.append(f"{rel_path}:{file_etag}")
 
         # Create a composite hash from all file ETags
@@ -288,10 +297,10 @@ class S3Ops:
 
     def compare_directory_with_s3_prefix(
         self,
-        bucket_name: str,
-        s3_prefix: str,
-        local_dir_path: str,
-        chunk_size: int = 8 * 1024 * 1024,
+        _bucket_name: str,
+        _s3_prefix: str,
+        _local_dir_path: str,
+        _chunk_size: int = 8 * 1024 * 1024,
     ) -> Dict[str, Any]:
         """
         Compare a local directory with objects under an S3 prefix.
@@ -310,33 +319,25 @@ class S3Ops:
             - missing_in_s3: Files in local directory not found in S3
             - missing_locally: Files in S3 not found in local directory
         """
-        if not os.path.isdir(local_dir_path):
-            raise ValueError(f"{local_dir_path} is not a directory")
+        if not os.path.isdir(_local_dir_path):
+            raise ValueError(f"{_local_dir_path} is not a directory")
 
         # Ensure s3_prefix ends with '/' if not empty
-        if s3_prefix and not s3_prefix.endswith("/"):
-            s3_prefix += "/"
+        if _s3_prefix and not _s3_prefix.endswith("/"):
+            _s3_prefix += "/"
 
         # Get all S3 objects under the prefix
-        s3_objects = {}
-        paginator = self.s3_client.get_paginator("list_objects_v2")
-        for page in paginator.paginate(Bucket=bucket_name, Prefix=s3_prefix):
-            if "Contents" in page:
-                for obj in page["Contents"]:
-                    key = obj["Key"]
-                    # Skip "directory" objects (empty objects with trailing slash)
-                    if not key.endswith("/"):
-                        s3_objects[key] = obj["ETag"].strip('"')
+        s3_objects = self.list_file_metadata(_bucket_name, _s3_prefix)
 
         # Get all local files
         local_files = {}
-        for root, _, files in os.walk(local_dir_path):
+        for root, _, files in os.walk(_local_dir_path):
             for file in files:
                 file_path = os.path.join(root, file)
-                rel_path = os.path.relpath(file_path, local_dir_path)
+                rel_path = os.path.relpath(file_path, _local_dir_path)
                 # Convert Windows path separators to forward slashes for S3 compatibility
                 rel_path = rel_path.replace("\\", "/")
-                s3_key = s3_prefix + rel_path
+                s3_key = _s3_prefix + rel_path
                 local_files[s3_key] = file_path
 
         # Compare files
@@ -347,16 +348,18 @@ class S3Ops:
 
         # Check local files against S3
         for s3_key, local_path in local_files.items():
-            if s3_key in s3_objects:
-                local_etag = self.calculate_s3_etag(local_path, chunk_size)
-                if local_etag == s3_objects[s3_key]:
+            if s3_key in [k for k in s3_objects.keys() if not k.endswith("/")]:
+                local_etag = self.calculate_s3_etag(local_path, _chunk_size)
+                if local_etag == s3_objects[s3_key].etag:
                     matching_files.append(s3_key)
                 else:
                     different_files.append(
                         {
                             "key": s3_key,
                             "local_etag": local_etag,
-                            "s3_etag": s3_objects[s3_key],
+                            "s3_etag": s3_objects[s3_key].etag,
+                            "local_size": os.path.getsize(local_path),
+                            "s3_size": s3_objects[s3_key].size
                         }
                     )
             else:
@@ -368,7 +371,7 @@ class S3Ops:
                 missing_locally.append(s3_key)
 
         # Calculate directory composite ETag
-        directory_etag = self.calculate_directory_etag(local_dir_path, chunk_size)
+        directory_etag = self.calculate_directory_etag(_local_dir_path, _chunk_size)
 
         return {
             "directory_etag": directory_etag,

@@ -1,4 +1,7 @@
 
+0.1.6
+  Refactoring the directr comparation function created by AI Amazon Q
+
 0.1.5
   Tests all pass now
   The output is still not easilly readable

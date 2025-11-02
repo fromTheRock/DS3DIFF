@@ -42,18 +42,26 @@ class ArgumentsLoader:
     Launcher class to run various experiments chooing bucket and objects
     """
 
-    s3: S3Ops = None
-    s3_endpoint: str = None
-    s3_region: str = None
 
     def __init__(self, *, _s3_endpoint: str = None, _s3_region: str = None, _s3: S3Ops = None):
 
+        self.s3: S3Ops = None
+        self.s3_endpoint: str = None
+        self.s3_region: str = None
+
+        if _s3 is not None:
+            self.s3 = _s3
+            self.s3_endpoint = _s3.s3_endpoint
+            self.s3_region = _s3.s3_region
+            return
+ 
         #Step 1: Get the S3 data from the environment variables (if not passed as argument)
         if _s3_endpoint is None:
             _s3_endpoint = os.environ.get("S3_ENDPOINT", None)
         if _s3_region is None:
             _s3_region = os.environ.get("S3_REGION", None)
-        print(f'Environ Endpoint: {_s3_endpoint}; Region: {_s3_region}')
+        if _s3_endpoint is not None or _s3_region is not None:
+            print(f'Environ Endpoint: {_s3_endpoint}; Region: {_s3_region}')
 
 
         #Step 2: Get the S3 data from default variable

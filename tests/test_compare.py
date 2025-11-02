@@ -37,9 +37,9 @@ def test_compare_dir(get_s3_ops: S3Ops, get_module_path: str):
     path_os = os.path.join(get_module_path, 'os_fixture')
 
     res = s3_ops.compare_directory_with_s3_prefix(
-        bucket_name=bucket,
-        s3_prefix=s3_path,
-        local_dir_path=path_os
+        _bucket_name=bucket,
+        _s3_prefix=s3_path,
+        _local_dir_path=path_os
     )
 
     assert res is not None

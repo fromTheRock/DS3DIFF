@@ -4,7 +4,6 @@ and get the list of all object in the bucket chosen.
 '''
 from rich import print as rprint
 
-from src.files.s3_ops import S3Ops
 from src.arguments_loader import ArgumentsLoader as Loader
 
 def main() -> None:

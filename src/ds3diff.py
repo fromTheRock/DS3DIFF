@@ -90,9 +90,9 @@ def main():
             s3_path = args[S3_FOLDER]
 
         output = loader.s3.compare_directory_with_s3_prefix(
-            bucket_name=selected_bucket,
-            s3_prefix=s3_path,
-            local_dir_path=os_path
+            _bucket_name=selected_bucket,
+            _s3_prefix=s3_path,
+            _local_dir_path=os_path
         )
         con = Console()
 

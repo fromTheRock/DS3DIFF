@@ -4,17 +4,19 @@ Module to work with files in filesytem folders
 import os
 
 from rich.console import Console
+#from rich import inspect
 
 from src.arguments_loader import ArgumentQuestion
 from src.arguments_loader import ArgumentsLoader
 from src.files.os_dir import extract_file_data
+from src.files.os_dir import FileMetadata
 
 LIST_FOLDER = "LIST_FOLDER"
 con = Console()
 
 
 
-def main() -> list:
+def main() -> list[FileMetadata]:
     '''Prints a list of files in directory received as argument
     '''
 
@@ -41,4 +43,5 @@ if __name__ == "__main__":
 
     for file in files_json:
         con.print(file)
+        #inspect(file, methods=False)
         con.print("\n")

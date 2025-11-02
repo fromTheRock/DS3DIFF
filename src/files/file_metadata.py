@@ -6,66 +6,64 @@ Used to check differences between files stored in different archives
 import os
 import datetime
 
+class S3Consts:
+    """Constannts for dict file metadata containter"""
+    #list_objects_v2 - output dict keys
+    F_DICT_KEY = 'Key'
+    F_DICT_LAST_MODIFIED = 'LastModified'
+    F_DICT_ETAG = 'ETag'
+    F_DICT_SIZE = 'Size'
+    F_DICT_STORAGE_CLASS = 'StorageClass'
+    F_DICT_OWNER = 'Owner'
 
 class FileMetadata:
     """Base object representing the file metadata from the filesysstem"""
 
-    path = ""
-    name = ""
-    extension = ""
-    size = 0
-    creation_date = None
-    last_modification_date = None
-    etag = None
-
-    def __init__(
-        self,
-        path: str,
-        name: str,
-        size: int,
-        creation_date,
-        last_modification_date,
+    def __init__(self,
+        _path: str, _name: str, _size: int,
+        _creation_date, _last_modification_date,
         etag: str = None,
     ) -> None:
-        self.path = path
-        self.name = name
-        _, file_extension = os.path.splitext(name)
+        self.path = _path
+        self.name = _name
+        self.full_path = os.path.join(_path, _name)
+        _, file_extension = os.path.splitext(_name)
         self.extension = file_extension[1:] if file_extension else ""
-        self.size = size if size else None
+        self.size = _size if _size else None
         self.etag = etag
 
-        if creation_date is None:
+        if _creation_date is None:
             self.creation_date = None
-        elif isinstance(creation_date, datetime.datetime):
-            self.creation_date = creation_date
-        elif isinstance(creation_date, (float, int)):
+        elif isinstance(_creation_date, datetime.datetime):
+            self.creation_date = _creation_date
+        elif isinstance(_creation_date, (float, int)):
             self.creation_date = datetime.datetime.fromtimestamp(
-                creation_date, tz=datetime.timezone.utc
+                _creation_date, tz=datetime.timezone.utc
             )
         else:
             try:
                 # To parse a datetime string, use datetime.strptime() with appropriate format string
                 # Example: datetime.datetime.strptime(creation_date_str, '%Y-%m-%d %H:%M:%S')
                 self.creation_date = datetime.datetime.strptime(
-                    creation_date.__str__, "%Y-%m-%d %H:%M:%S"
+                    _creation_date.__str__, "%Y-%m-%d %H:%M:%S"
                 )
             except ValueError:
                 self.creation_date = None
 
-        if last_modification_date is None:
+        if _last_modification_date is None:
             self.last_modification_date = None
-        if isinstance(last_modification_date, datetime.datetime):
-            self.last_modification_date = last_modification_date
-        elif isinstance(last_modification_date, (float, int)):
+        if isinstance(_last_modification_date, datetime.datetime):
+            self.last_modification_date = _last_modification_date
+        elif isinstance(_last_modification_date, (float, int)):
             self.last_modification_date = datetime.datetime.fromtimestamp(
-                last_modification_date, tz=datetime.timezone.utc
+                _last_modification_date, tz=datetime.timezone.utc
             )
         else:
             try:
                 # To parse a datetime string, use datetime.strptime() with appropriate format string
                 # Example: datetime.datetime.strptime(creation_date_str, '%Y-%m-%d %H:%M:%S')
                 self.last_modification_date = datetime.datetime.strptime(
-                    last_modification_date.__str__, "%Y-%m-%d %H:%M:%S"
+                    _last_modification_date.__str__, "%Y-%m-%d %H:%M:%S"
                 )
             except ValueError:
                 self.last_modification_date = None
@@ -86,9 +84,19 @@ class FileMetadata:
             return f"{self.size / (1024 * 1024 * 1024 * 1024):.2f} TB"
 
     def __str__(self):
-        return f"""{self.name}, Size: {self.get_size()}, \
-            Creation Date: {self.creation_date}, \
-            Last Modification Date: {self.last_modification_date}"""
+        return f'''{{"{S3Consts.F_DICT_KEY}": "{self.full_path}",
+        "{S3Consts.F_DICT_LAST_MODIFIED}": "{self.last_modification_date}",
+        "{S3Consts.F_DICT_ETAG}": "{self.etag}",
+        "{S3Consts.F_DICT_SIZE}": "{self.size}"}}'''
+
+    def __repr__(self):
+        return f'''{{"path": "{self.full_path}", \
+            "name": "{self.name}", \
+            "extension": "{self.extension}", \
+            "creation_date": {self.creation_date}, \
+            "etag": "{self.etag}", \
+            "size": {self.get_size()}, \
+            "last_modification_date": {self.last_modification_date}}}'''
 
     def __eq__(self, other):
         """
