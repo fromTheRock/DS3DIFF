@@ -43,3 +43,21 @@ def extract_file_data(path: str, list_files: list, deph: int) -> list[FileMetada
             _file_metadata.append(get_file_data(pathname))
 
     return _file_metadata
+
+def check_and_delete(path: str) -> bool:
+    '''
+    Delete a file from the file system if it exists.
+    
+    Args:
+        path (str): The path to the file to delete
+        
+    Returns:
+        bool: True if file was deleted, False if file did not exist
+    '''
+    try:
+        if os.path.exists(path):
+            os.remove(path)
+            return True
+        return False
+    except OSError:
+        return False

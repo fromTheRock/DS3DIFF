@@ -19,6 +19,7 @@ from moto.server import ThreadedMotoServer
 #from pathlib import Path
 from src.files.s3_ops import S3Ops
 from tests.s3_util import S3Util
+import src.files.os_dir as os_dir
 
 ENV_S3_REGION = 'us-east-1'
 ENV_S3_ENDPOINT = 'http://127.0.0.1:5000'
@@ -121,6 +122,9 @@ def test_list_files(get_s3_ops):
     assert file_list["Contents"][0]["Key"] == "sample-1.txt"
 
 def test_list_file_meta_data (set_aws_credentials, moto_server, s3_client):
+    """
+    Test extracting list of FileMetadata from S3 bucket1
+    """
     # Test S3Ops.list_objects()
     s3_ops = S3Ops(_s3_endpoint = ENV_S3_ENDPOINT, _s3_region = ENV_S3_REGION)
 
@@ -135,7 +139,6 @@ def test_list_file_meta_data (set_aws_credentials, moto_server, s3_client):
     # Verify upload
     assert len(file_dict.values()) > 0
     assert file_dict["sample-1.txt"] is not None
-
 
 if __name__ == "__main__":
     pytest.main()

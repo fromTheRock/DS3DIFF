@@ -12,7 +12,10 @@ def get_module_path():
     """
     Get the path of the current module
     """
-    yield os.path.dirname(os.path.abspath(__file__))
+    base_path = os.path.dirname(os.path.abspath(__file__))
+    os_dir.check_and_delete(os.path.join(base_path, 'os_fixture/sample-2.txt'))
+
+    yield base_path
 
 
 def test_os_dir(get_module_path):
