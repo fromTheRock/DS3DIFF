@@ -6,14 +6,14 @@ from src.arguments_loader import ArgumentQuestion as Question
 from src.arguments_loader import ArgumentsLoader as Loader
 
 OBJ_SELECTED = "S3_OBJECT"
-questions = list()
-questions.append(Question("Object to read?", OBJ_SELECTED))
 
 def main() -> None:
     '''Main entry point of the script
     '''
 
-    loader = Loader()
+    questions = list()
+    questions.append(Question("Object to read?", OBJ_SELECTED))
+    loader = Loader(questions=questions)
     s3 = loader.s3
     if s3.s3_client is None:
         print('Error: S3 client is not initialized')
@@ -23,8 +23,7 @@ def main() -> None:
     if selected_bucket is None:
         print('No buckets found')
         return
-    args = loader.get_arguments(questions)
-    selected_file = args[OBJ_SELECTED]
+    selected_file = loader.arguments[OBJ_SELECTED]
 
 
     metadata = s3.get_s3_object_info(_bucket_name=selected_bucket, _s3_key=selected_file)

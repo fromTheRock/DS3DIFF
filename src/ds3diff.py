@@ -8,7 +8,6 @@ TODO:
 
 import contextlib
 from pathlib import Path
-from rich import inspect
 from rich.console import Console
 
 from src.files.s3_ops import S3Ops
@@ -57,18 +56,18 @@ def main():
 
     # Process (main loop)
     with contextlib.suppress(KeyboardInterrupt):
-        loader = Loader()
         questions = [
-            ArgumentQuestion("Directory?", OS_FOLDER),
+            ArgumentQuestion("Local Directory?", OS_FOLDER),
             ArgumentQuestion("S3 root path?", S3_FOLDER),
         ]
+        loader = Loader(questions=questions)
 
         selected_bucket = loader.get_bucket()
         if selected_bucket is None:
             print("No buckets found")
             return
-        args = loader.get_arguments(questions)
 
+        args = loader.arguments
         if args is None:
             print("No arguments provided")
             return

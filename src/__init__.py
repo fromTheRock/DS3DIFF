@@ -2,3 +2,4 @@
 __all__ = ["arguments_loader"]
 
 # Import the submodules
+from src import arguments_loader

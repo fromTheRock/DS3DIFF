@@ -1,6 +1,7 @@
 '''
 Module to work with files in filesytem folders
 '''
+import contextlib
 import os
 
 from rich.console import Console
@@ -22,18 +23,18 @@ def main() -> list[FileMetadata]:
 
     con.clear()
 
-    #Asks for the path to list without loading the S3 objects
-    loader = ArgumentsLoader()
-    _question = [ ArgumentQuestion("Root Path to scan:", LIST_FOLDER) ]
-    args = loader.get_arguments(_question)
+    with contextlib.suppress(KeyboardInterrupt):
+        #Asks for the path to list without loading the S3 objects
+        _question = [ ArgumentQuestion("Root Path to scan:", LIST_FOLDER) ]
+        loader = ArgumentsLoader(questions =_question, use_s3=False)
 
-    path = args[LIST_FOLDER]
+        path = loader.arguments[LIST_FOLDER]
 
-    list_files = os.listdir(path)
+        list_files = os.listdir(path)
 
-    f_json = extract_file_data(path, list_files, 0)
+        f_json = extract_file_data(path, list_files, 0)
 
-    return f_json
+        return f_json
 
 if __name__ == "__main__":
     files_json = main()

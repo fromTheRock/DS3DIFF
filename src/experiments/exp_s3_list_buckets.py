@@ -1,7 +1,6 @@
 from rich import print as rprint
 
 from src.arguments_loader import ArgumentsLoader
-from src.files.s3_ops import S3Ops
 
 
 def main() -> None:

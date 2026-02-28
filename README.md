@@ -112,6 +112,8 @@ Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process; .\venv\Scripts\activ
 $env:PYTHONPATH = ".;src;src\files"
 ```
 
+I inserted the lines above in the file `setVenv.ps1`. Just run this script.
+
 Using CMD Shell:
 
 ```CMD

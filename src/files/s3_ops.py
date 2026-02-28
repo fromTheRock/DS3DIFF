@@ -13,7 +13,6 @@ import boto3
 from botocore.exceptions import ClientError
 
 from src.files.file_metadata import FileMetadata
-from src.files.file_metadata import S3Consts
 class S3Ops:
     """Utility class for S3 operations"""
 
@@ -122,6 +121,8 @@ class S3Ops:
         """
         file_dict = dict()
 
+        if "Contents" not in _list_objects:
+            return file_dict
         for obj in _list_objects["Contents"]:
             file_name = obj["Key"]
             file_size = obj["Size"]
