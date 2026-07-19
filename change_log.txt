@@ -1,5 +1,6 @@
 0.2.1
-  Print usage in experiment/exp_
+0.2.1b
+  Print usage in sripts in  src/experiment package
 
 0.2.0
   Refactoring of the arguments_loader to receive argument value as command line arguments 
