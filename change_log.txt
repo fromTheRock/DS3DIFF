@@ -1,11 +1,9 @@
+0.2.1
+  Print usage in experiment/exp_
 
 0.2.0
   Refactoring of the arguments_loader to receive argument value as command line arguments 
   or asking them as a prompt to the user if they are not set set as Environment variables.
-
-0.1.7
-  Add test_cp that download of a single file from the mocked bucket to os_fixture.
-  The file then will be removed to make the test repeatable.
 
 0.1.7
   Add test_cp that download of a single file from the mocked bucket to os_fixture.

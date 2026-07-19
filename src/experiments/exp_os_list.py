@@ -18,12 +18,18 @@ con = Console()
 
 
 def main() -> list[FileMetadata]:
-    '''Prints a list of files in directory received as argument
+    '''Prints a list of files in directory received as argument (Not subdirectories)
     '''
 
     con.clear()
 
+    con.print("Usage:\n")
+    con.print("py ./experiments/exp_os_list.py\n")
+    con.print("- It asks for a path in the local disk\n")
+    con.print("- It prints the files contained in the given (no recursive, no directory printed)\n")
+
     with contextlib.suppress(KeyboardInterrupt):
+        #Asks for the path to list without loading the S3 objects
         #Asks for the path to list without loading the S3 objects
         _question = [ ArgumentQuestion("Root Path to scan:", LIST_FOLDER) ]
         loader = ArgumentsLoader(questions =_question, use_s3=False)

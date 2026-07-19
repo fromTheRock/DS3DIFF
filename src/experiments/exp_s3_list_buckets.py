@@ -6,6 +6,12 @@ from src.arguments_loader import ArgumentsLoader
 def main() -> None:
     '''Main entry point of the script'''
 
+    rprint("Usage:\n")
+    rprint("py ./src/experiments/exp_s3_list_buckets.py\n")
+    rprint("- It asks for s3 connection parameters (endpoint and region),\n") 
+    rprint("  if not provided in environment variable\n")
+    rprint("- It prints all the tata returned by [italic]list_buckets[/italic] S3 function \n")
+
     loader = ArgumentsLoader()
     s3 = loader.s3
 
