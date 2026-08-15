@@ -1,6 +1,12 @@
+0.2.2
+  - ds3diff now use FileMetadata and DifferentFileMetadata classes to exctract differences 
+    between files and folders
+  - The output of ds3diff is still a simple json
+    FileMetadata and DifferentFileMetadata use __repr__ method to convert self in json
+
 0.2.1
 0.2.1b
-  Print usage in sripts in  src/experiment package
+  Print USAGE runnint scripts in src/experiment package
 
 0.2.0
   Refactoring of the arguments_loader to receive argument value as command line arguments 

@@ -8,20 +8,30 @@ import datetime
 
 class S3Consts:
     """Constannts for dict file metadata containter"""
-    #list_objects_v2 - output dict keys
-    F_DICT_KEY = 'Key'
-    F_DICT_LAST_MODIFIED = 'LastModified'
-    F_DICT_ETAG = 'ETag'
-    F_DICT_SIZE = 'Size'
-    F_DICT_STORAGE_CLASS = 'StorageClass'
-    F_DICT_OWNER = 'Owner'
+
+    # list_objects_v2 - output dict keys
+    F_DICT_KEY = "Key"
+    F_DICT_LAST_MODIFIED = "LastModified"
+    F_DICT_ETAG = "ETag"
+    F_DICT_SIZE = "Size"
+    F_DICT_STORAGE_CLASS = "StorageClass"
+    F_DICT_OWNER = "Owner"
+    # Additional constants for DifferentFileMetadata
+    F_DICT_DIFFERENT_SIZE = "different_size"
+    F_DICT_DIFF_LAST_MODIFIED = "diff_last_modified"
+    F_DICT_DIFFERENT_ETAG = "different_etag"
+
 
 class FileMetadata:
     """Base object representing the file metadata from the filesysstem"""
 
-    def __init__(self,
-        _path: str, _name: str, _size: int,
-        _creation_date, _last_modification_date,
+    def __init__(
+        self,
+        _path: str,
+        _name: str,
+        _size: int,
+        _creation_date,
+        _last_modification_date,
         etag: str = None,
     ) -> None:
         self.path = _path
@@ -84,19 +94,19 @@ class FileMetadata:
             return f"{self.size / (1024 * 1024 * 1024 * 1024):.2f} TB"
 
     def __str__(self):
-        return f'''{{"{S3Consts.F_DICT_KEY}": "{self.full_path}",
+        return f"""{{"{S3Consts.F_DICT_KEY}": "{self.full_path}",
         "{S3Consts.F_DICT_LAST_MODIFIED}": "{self.last_modification_date}",
         "{S3Consts.F_DICT_ETAG}": "{self.etag}",
-        "{S3Consts.F_DICT_SIZE}": "{self.size}"}}'''
+        "{S3Consts.F_DICT_SIZE}": "{self.size}"}}"""
 
     def __repr__(self):
-        return f'''{{"path": "{self.full_path}", \
+        return f"""{{"path": "{self.full_path}", \
             "name": "{self.name}", \
             "extension": "{self.extension}", \
             "creation_date": {self.creation_date}, \
             "etag": "{self.etag}", \
             "size": {self.get_size()}, \
-            "last_modification_date": {self.last_modification_date}}}'''
+            "last_modification_date": {self.last_modification_date}}}"""
 
     def __eq__(self, other):
         """
@@ -122,3 +132,67 @@ class FileMetadata:
                 or self.creation_date == other.creation_date
             )
         )
+
+
+class DifferentFileMetadata(FileMetadata):
+    """Base object representing the file metadata
+    with difference between S3 object and file from the
+    local filesysstem"""
+
+    def __init__(
+        self,
+        path,
+        name,
+        size,
+        different_size,
+        creation_date,
+        last_modification_date,
+        diff_last_modified,
+        local_etag,
+        different_etag,
+    ):
+        super().__init__(
+            path, name, size, creation_date, last_modification_date, local_etag
+        )
+
+        self.different_size = different_size
+        self.diff_last_modified = diff_last_modified
+        self.different_etag = different_etag
+
+    @classmethod
+    def from_filemetadata(
+        cls, file1: FileMetadata, different_size, diff_last_modified, different_etag
+    ):
+        """Create a DifferentFileMetadata object from a FileMetadata object."""
+        return cls(
+            file1.path,
+            file1.name,
+            file1.size,
+            different_size,
+            file1.creation_date,
+            file1.last_modification_date,
+            diff_last_modified,
+            file1.etag,
+            different_etag,
+        )
+
+    def __str__(self):
+        return f"""{{"{S3Consts.F_DICT_KEY}": "{self.full_path}",
+        "{S3Consts.F_DICT_LAST_MODIFIED}": "{self.last_modification_date}",
+        "{S3Consts.F_DICT_ETAG}": "{self.etag}",
+        "{S3Consts.F_DICT_SIZE}": "{self.size}",
+        "{S3Consts.F_DICT_DIFFERENT_SIZE}": "{self.different_size}",
+        "{S3Consts.F_DICT_DIFF_LAST_MODIFIED}": "{self.diff_last_modified}",
+        "{S3Consts.F_DICT_DIFFERENT_ETAG}": "{self.different_etag}"}}"""
+
+    def __repr__(self):
+        return f"""{{"path": "{self.full_path}", \
+            "name": "{self.name}", \
+            "extension": "{self.extension}", \
+            "creation_date": {self.creation_date}, \
+            "{S3Consts.F_DICT_ETAG}": "{self.etag}", \
+            "{S3Consts.F_DICT_SIZE}": {self.get_size()}, \
+            "{S3Consts.F_DICT_LAST_MODIFIED}": {self.last_modification_date}, \
+            "{S3Consts.F_DICT_DIFFERENT_SIZE}": {self.different_size}, \
+            "{S3Consts.F_DICT_DIFF_LAST_MODIFIED}": {self.diff_last_modified}, \
+            "{S3Consts.F_DICT_DIFFERENT_ETAG}": "{self.different_etag}"}}"""

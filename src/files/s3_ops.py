@@ -12,7 +12,7 @@ import os
 import boto3
 from botocore.exceptions import ClientError
 
-from src.files.file_metadata import FileMetadata
+from src.files.file_metadata import DifferentFileMetadata, FileMetadata
 class S3Ops:
     """Utility class for S3 operations"""
 
@@ -134,7 +134,8 @@ class S3Ops:
             )
             file_dict[file_name] = file_metadata
 
-            print(file_metadata)
+            #Debug print generate confusing list
+            #print(file_metadata)
 
         return file_dict
 
@@ -302,7 +303,7 @@ class S3Ops:
         _s3_prefix: str,
         _local_dir_path: str,
         _chunk_size: int = 8 * 1024 * 1024,
-    ) -> Dict[str, Any]:
+    ) -> Dict[str, FileMetadata]:
         """
         Compare a local directory with objects under an S3 prefix.
 
@@ -331,7 +332,7 @@ class S3Ops:
         s3_objects = self.list_file_metadata(_bucket_name, _s3_prefix)
 
         # Get all local files
-        local_files = {}
+        local_files : Dict[str, str] = {}
         for root, _, files in os.walk(_local_dir_path):
             for file in files:
                 file_path = os.path.join(root, file)
@@ -342,29 +343,34 @@ class S3Ops:
                 local_files[s3_key] = file_path
 
         # Compare files
-        matching_files = []
-        different_files = []
-        missing_in_s3 = []
-        missing_locally = []
+        matching_files : List[FileMetadata] = []
+        different_files : List[DifferentFileMetadata] = []
+        missing_in_s3 : List[FileMetadata] = []
+        missing_locally : List[FileMetadata] = []
 
         # Check local files against S3
         for s3_key, local_path in local_files.items():
-            if s3_key in [k for k in s3_objects.keys() if not k.endswith("/")]:
+            if s3_key in [k for k in s3_objects if not k.endswith("/")]:
                 local_etag = self.calculate_s3_etag(local_path, _chunk_size)
                 if local_etag == s3_objects[s3_key].etag:
-                    matching_files.append(s3_key)
+                    file_s3 = s3_objects[s3_key]
+                    file_s3.last_modification_date = os.path.getmtime
+                    matching_files.append(file_s3)
                 else:
                     different_files.append(
-                        {
-                            "key": s3_key,
-                            "local_etag": local_etag,
-                            "s3_etag": s3_objects[s3_key].etag,
-                            "local_size": os.path.getsize(local_path),
-                            "s3_size": s3_objects[s3_key].size
-                        }
-                    )
+                        DifferentFileMetadata.from_filemetadata(
+                            s3_objects[s3_key],
+                            os.path.getsize(local_path),
+                            os.path.getmtime(local_path),
+                            local_etag))
             else:
-                missing_in_s3.append(s3_key)
+                file_os = FileMetadata(local_path, 
+                                       os.path.basename(local_path),
+                                       os.path.getsize(local_path),
+                                       os.path.getctime(local_path),
+                                       os.path.getmtime(local_path),
+                                       local_etag)
+                missing_in_s3.append(file_os)
 
         # Check for files in S3 but not locally
         for s3_key in s3_objects:

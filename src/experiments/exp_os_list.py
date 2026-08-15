@@ -30,7 +30,6 @@ def main() -> list[FileMetadata]:
 
     with contextlib.suppress(KeyboardInterrupt):
         #Asks for the path to list without loading the S3 objects
-        #Asks for the path to list without loading the S3 objects
         _question = [ ArgumentQuestion("Root Path to scan:", LIST_FOLDER) ]
         loader = ArgumentsLoader(questions =_question, use_s3=False)
 
